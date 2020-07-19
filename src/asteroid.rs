@@ -24,6 +24,7 @@ pub fn new(
                 (rng.gen::<f32>() * height as f32) as i32,
                 rng.gen::<f32>() * MAX_SPEED,
                 rng.gen::<f32>() * MAX_SPEED,
+                rng.gen::<f32>() * 360.0,
                 texture)
         })
         .map_err(|e| format!("Cannot create asteroid: {}", e))

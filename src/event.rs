@@ -4,6 +4,7 @@ use std::collections::HashMap;
 
 use sdl2::EventPump;
 use sdl2::controller::Axis;
+use sdl2::controller::Button;
 use sdl2::controller::GameController;
 use sdl2::event::Event as SdlEvent;
 
@@ -13,6 +14,7 @@ pub enum Event {
     Quit,
     LeftJoystick { joystick: Joystick },
     RightJoystick { joystick: Joystick },
+    Fire,
 }
 
 pub fn process_events(
@@ -45,6 +47,10 @@ pub fn process_events(
                             controllers.get(&which).unwrap())
                     });
             },
+            SdlEvent::ControllerButtonDown { button, .. }
+            if button == Button::RightShoulder => {
+                events.push(Event::Fire);
+            }
             _ => {},
         };
     };

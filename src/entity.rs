@@ -9,14 +9,20 @@ pub struct Entity<'a> {
     texture: Texture<'a>,
 }
 
+// orientatin is in degrees
 impl <'a> Entity<'a> {
-    pub fn new(x: i32, y: i32, dx: f32, dy: f32, texture: Texture) -> Entity {
+    pub fn new(
+        x: i32, y: i32,
+        dx: f32, dy: f32,
+        orientation: f32,
+        texture: Texture
+    ) -> Entity {
         Entity {
             x: x as f32,
             y: y as f32,
             dx,
             dy,
-            orientation: 0.0,
+            orientation,
             texture: texture,
         }
     }
@@ -31,5 +37,13 @@ impl <'a> Entity<'a> {
 
     pub fn height(&self) -> u32 {
         self.texture.query().height
+    }
+
+    pub fn orientation_rad(&self) -> f32 {
+        self.orientation * std::f32::consts::PI / 180.0
+    }
+
+    pub fn orientation_deg(&self) -> f32 {
+        self.orientation
     }
 }

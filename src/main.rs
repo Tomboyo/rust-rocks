@@ -40,11 +40,11 @@ fn main() {
         &texture_creator,
         (400, 300),
         (0.0, 0.0)).expect("Failed to create player");
-
     let mut asteroids: Vec<entity::Entity> = (1..5)
         .map(|_| asteroid::new(&texture_creator, (WIDTH, HEIGHT)))
         .map(|result| result.expect("Failed to create asteroid"))
         .collect();
+    let mut bullets: Vec<entity::Entity> = vec![];
 
     'outer: loop {
         let events = event::process_events(&mut pump, &controllers);
@@ -52,19 +52,29 @@ fn main() {
         for event in events.iter() {
             match event {
                 Event::Quit => break 'outer,
-                _ => player::handle_event(&mut player, event)
+                _ => if let Some(entity) =
+                        player::handle_event(&mut player, event, &texture_creator) {
+                    bullets.push(entity);
+                }
             }
         }
 
         position::translate(&mut player, WIDTH as f32, HEIGHT as f32);
         asteroids.iter_mut()
             .for_each(|x| position::translate(x, WIDTH as f32, HEIGHT as f32));
+        bullets.iter_mut()
+            .for_each(|x| position::translate(x, WIDTH as f32, HEIGHT as f32));
 
         canvas.set_draw_color(Color::BLACK);
         canvas.clear();
 
         render::render(&mut canvas, &player).expect("Failed to render player");
-        asteroids.iter_mut()
+        asteroids.iter()
+            .for_each(|x| {
+                render::render(&mut canvas, x)
+                    .expect("Failed to render asteroid");
+            });
+        bullets.iter()
             .for_each(|x| {
                 render::render(&mut canvas, x)
                     .expect("Failed to render asteroid");
