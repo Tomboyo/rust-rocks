@@ -44,10 +44,8 @@ fn main() {
     let mut asteroids: Vec<entity::Entity> =
         (1..5).map(|_| spawn_asteroid()).collect();
 
-    let mut event_bus = events::EventBus::new();
-
     'outer: loop {
-        let events = event_bus.process_events(&mut pump, &controllers);
+        let events = events::process_events(&mut pump, &controllers);
 
         for event in events.iter() {
             match event {

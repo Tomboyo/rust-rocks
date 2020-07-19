@@ -5,8 +5,6 @@ use sdl2::controller::Axis;
 use sdl2::controller::GameController;
 use sdl2::event::Event as SdlEvent;
 
-pub struct EventBus {}
-
 pub struct Joystick {
     x: i16,
     y: i16,
@@ -69,64 +67,57 @@ pub enum Event {
     RightJoystick { joystick: Joystick },
 }
 
-impl EventBus {
-    pub fn new() -> EventBus {
-        EventBus {}
-    }
+pub fn process_events(
+    event_pump: &mut EventPump,
+    controllers: &HashMap<u32, GameController>,
+) -> Vec<Event> {
+    let mut left_joy_changed = false;
+    let mut right_joy_changed = false;
+    let mut events = Vec::new();
 
-    pub fn process_events(
-        &mut self,
-        event_pump: &mut EventPump,
-        controllers: &HashMap<u32, GameController>,
-    ) -> Vec<Event> {
-        let mut left_joy_changed = false;
-        let mut right_joy_changed = false;
-        let mut events = Vec::new();
-
-        for event in event_pump.poll_iter() {
-            match event {
-                SdlEvent::Quit{ .. } =>
-                    events.push(Event::Quit),
-                SdlEvent::JoyAxisMotion { which, axis_idx: id, .. }
-                if (id == 0 || id == 1) && !left_joy_changed => {
-                    left_joy_changed = true;
-                    events.push(
-                        Event::LeftJoystick {
-                            joystick: EventBus::get_left_joystick_state(
-                                controllers.get(&which).unwrap())
-                        });
-                },
-                SdlEvent::JoyAxisMotion { which, axis_idx: id, .. }
-                if (id == 2 || id == 3) && !right_joy_changed => {
-                    right_joy_changed = true;
-                    events.push(
-                        Event::RightJoystick {
-                            joystick: EventBus::get_right_joystick_state(
-                                controllers.get(&which).unwrap())
-                        });
-                },
-                _ => {},
-            };
+    for event in event_pump.poll_iter() {
+        match event {
+            SdlEvent::Quit{ .. } =>
+                events.push(Event::Quit),
+            SdlEvent::JoyAxisMotion { which, axis_idx: id, .. }
+            if (id == 0 || id == 1) && !left_joy_changed => {
+                left_joy_changed = true;
+                events.push(
+                    Event::LeftJoystick {
+                        joystick: get_left_joystick_state(
+                            controllers.get(&which).unwrap())
+                    });
+            },
+            SdlEvent::JoyAxisMotion { which, axis_idx: id, .. }
+            if (id == 2 || id == 3) && !right_joy_changed => {
+                right_joy_changed = true;
+                events.push(
+                    Event::RightJoystick {
+                        joystick: get_right_joystick_state(
+                            controllers.get(&which).unwrap())
+                    });
+            },
+            _ => {},
         };
+    };
 
-        events
+    events
+}
+
+fn get_left_joystick_state(
+    controller: &GameController,
+) -> Joystick {
+    Joystick {
+        x: controller.axis(Axis::LeftX),
+        y: controller.axis(Axis::LeftY),
     }
+}
 
-    fn get_left_joystick_state(
-        controller: &GameController,
-    ) -> Joystick {
-        Joystick {
-            x: controller.axis(Axis::LeftX),
-            y: controller.axis(Axis::LeftY),
-        }
-    }
-
-    fn get_right_joystick_state(
-        controller: &GameController,
-    ) -> Joystick {
-        Joystick {
-            x: controller.axis(Axis::RightX),
-            y: controller.axis(Axis::RightY),
-        }
+fn get_right_joystick_state(
+    controller: &GameController,
+) -> Joystick {
+    Joystick {
+        x: controller.axis(Axis::RightX),
+        y: controller.axis(Axis::RightY),
     }
 }
