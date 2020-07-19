@@ -1,41 +1,27 @@
-use sdl2::pixels::Color;
 use sdl2::rect::Rect;
-use sdl2::render::Texture;
 use sdl2::render::Canvas;
 use sdl2::video::Window;
 
 use crate::entity::Entity;
 
-pub fn render_texture(
+// TODO: especially evident on asteroids, this renders the background of the
+// sprite. We should not render the background pixels of sprites.
+pub fn render(
     canvas: &mut Canvas<Window>,
     entity: &Entity,
-    texture: &Texture,
-) {
-    let query = texture.query();
+) -> Result<(), String> {
+    let (width, height) = (entity.width(), entity.height());
     let rectangle = Rect::new(
-        (entity.x - (query.width as f32 / 2.0)) as i32,
-        (entity.y - (query.height as f32 / 2.0)) as i32,
-        query.width,
-        query.height);
+        (entity.x - (width as f32 / 2.0)) as i32,
+        (entity.y - (height as f32 / 2.0)) as i32,
+        width,
+        height);
     canvas.copy_ex(
-        &texture,
+        entity.texture(),
         None,
         rectangle,
         entity.orientation as f64,
         None, // rotate around center of `rectangle`
         false,
-        false).unwrap();
-}
-
-pub fn render_asteroid(
-    canvas: &mut Canvas<Window>,
-    entity: &Entity
-) {
-    canvas.set_draw_color(Color::WHITE);
-    let rectangle = Rect::new(
-        (entity.x - 10.0) as i32,
-        (entity.y - 10.0) as i32,
-        20,
-        20);
-    canvas.fill_rect(rectangle).expect("Failed to render entity");
+        false)
 }

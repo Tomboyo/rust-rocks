@@ -1,3 +1,4 @@
+mod asteroid;
 mod event;
 mod entity;
 mod player;
@@ -7,10 +8,8 @@ mod render;
 use std::collections::HashMap;
 
 use log;
-use rand::prelude::*;
 use sdl2::GameControllerSubsystem;
 use sdl2::controller::GameController;
-use sdl2::image::LoadTexture;
 use sdl2::pixels::Color;
 
 use crate::event::Event;
@@ -37,12 +36,15 @@ fn main() {
     // events. Hold a vector of controllers until the game loop exits.
     let controllers: HashMap<u32, GameController> = open_controllers(&gcs);
 
-    let player_texture = texture_creator.load_texture(
-            std::path::Path::new("resources/player-ship.bmp"))
-        .expect("Failed to open texture");
-    let mut player = entity::Entity::new(400, 300, 0.0, 0.0);
-    let mut asteroids: Vec<entity::Entity> =
-        (1..5).map(|_| spawn_asteroid()).collect();
+    let mut player = player::new(
+        &texture_creator,
+        (400, 300),
+        (0.0, 0.0)).expect("Failed to create player");
+
+    let mut asteroids: Vec<entity::Entity> = (1..5)
+        .map(|_| asteroid::new(&texture_creator, (WIDTH, HEIGHT)))
+        .map(|result| result.expect("Failed to create asteroid"))
+        .collect();
 
     'outer: loop {
         let events = event::process_events(&mut pump, &controllers);
@@ -61,25 +63,18 @@ fn main() {
         canvas.set_draw_color(Color::BLACK);
         canvas.clear();
 
-        render::render_texture(&mut canvas, &player, &player_texture);
+        render::render(&mut canvas, &player).expect("Failed to render player");
         asteroids.iter_mut()
-            .for_each(|x| render::render_asteroid(&mut canvas, x));
+            .for_each(|x| {
+                render::render(&mut canvas, x)
+                    .expect("Failed to render asteroid");
+            });
 
         canvas.present();
 
         // caps fps at 60. Will need an adaptive sleep.
         std::thread::sleep(std::time::Duration::from_millis(16));
     }
-}
-
-fn spawn_asteroid() -> entity::Entity {
-    let mut rng = rand::thread_rng();
-    entity::Entity::new(
-        (rng.gen::<f32>() * WIDTH as f32) as i32,
-        (rng.gen::<f32>() * WIDTH as f32) as i32,
-        rng.gen::<f32>() * 5.0,
-        rng.gen::<f32>() * 5.0,
-    )
 }
 
 fn open_controllers(gcs: &GameControllerSubsystem) -> HashMap<u32, GameController> {
