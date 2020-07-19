@@ -61,7 +61,6 @@ fn main() {
         canvas.set_draw_color(Color::BLACK);
         canvas.clear();
 
-        //render::render(&mut canvas, &player);
         render::render_texture(&mut canvas, &player, &player_texture);
         asteroids.iter_mut()
             .for_each(|x| render::render_asteroid(&mut canvas, x));
