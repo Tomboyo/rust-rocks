@@ -3,7 +3,7 @@ pub struct Entity {
     pub y: f32,
     pub dx: f32,
     pub dy: f32,
-    pub orientation: f64,
+    pub orientation: f32,
 }
 
 impl Entity {

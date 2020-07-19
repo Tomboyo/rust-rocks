@@ -21,7 +21,7 @@ pub fn render_texture(
         &texture,
         None,
         rectangle,
-        entity.orientation,
+        entity.orientation as f64,
         None, // rotate around center of `rectangle`
         false,
         false).unwrap();

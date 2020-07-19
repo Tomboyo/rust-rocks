@@ -4,6 +4,8 @@ mod player;
 mod position;
 mod render;
 
+use std::collections::HashMap;
+
 use log;
 use rand::prelude::*;
 use sdl2::GameControllerSubsystem;
@@ -33,7 +35,7 @@ fn main() {
 
     // Controllers self-close when dropped, which stops them from generating
     // events. Hold a vector of controllers until the game loop exits.
-    let _controllers: Vec<GameController> = open_controllers(&gcs);
+    let controllers: HashMap<u32, GameController> = open_controllers(&gcs);
 
     let player_texture = texture_creator.load_texture(
             std::path::Path::new("resources/player-ship.bmp"))
@@ -45,7 +47,7 @@ fn main() {
     let mut event_bus = events::EventBus::new();
 
     'outer: loop {
-        let events = event_bus.process_events(&mut pump);
+        let events = event_bus.process_events(&mut pump, &controllers);
 
         for event in events.iter() {
             match event {
@@ -83,14 +85,14 @@ fn spawn_asteroid() -> entity::Entity {
     )
 }
 
-fn open_controllers(gcs: &GameControllerSubsystem) -> Vec<GameController> {
+fn open_controllers(gcs: &GameControllerSubsystem) -> HashMap<u32, GameController> {
     (0..gcs.num_joysticks().expect("Unable to iterate joysticks"))
-        .map(|index| gcs.open(index))
-        .inspect(|result| match result {
+        .map(|index| (index, gcs.open(index)))
+        .inspect(|(_, result)| match result {
             Ok(controller) => log::info!("Opened controller {}", controller.name()),
             Err(e) => log::warn!("Failed to open controller: {}", e)
         })
-        .filter(Result::is_ok)
-        .map(Result::unwrap)
+        .filter(|(_, result)| result.is_ok())
+        .map(|(index, result)| (index, result.unwrap()))
         .collect()
 }
