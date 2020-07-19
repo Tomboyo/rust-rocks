@@ -1,0 +1,5 @@
+= Asteroids-Rs
+
+== Sprites by MillionthVector
+
+https://millionthvector.blogspot.com/p/free-sprites.html
