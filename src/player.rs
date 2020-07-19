@@ -1,5 +1,5 @@
 use crate::entity::Entity;
-use crate::events::Event;
+use crate::event::Event;
 
 static MAX_SPEED: f32 = 5.0;
 

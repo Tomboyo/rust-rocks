@@ -1,4 +1,4 @@
-mod events;
+mod event;
 mod entity;
 mod player;
 mod position;
@@ -13,7 +13,7 @@ use sdl2::controller::GameController;
 use sdl2::image::LoadTexture;
 use sdl2::pixels::Color;
 
-use crate::events::Event;
+use crate::event::Event;
 
 static WIDTH: u32 = 800;
 static HEIGHT: u32 = 600;
@@ -45,7 +45,7 @@ fn main() {
         (1..5).map(|_| spawn_asteroid()).collect();
 
     'outer: loop {
-        let events = events::process_events(&mut pump, &controllers);
+        let events = event::process_events(&mut pump, &controllers);
 
         for event in events.iter() {
             match event {
