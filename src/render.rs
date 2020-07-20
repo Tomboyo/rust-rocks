@@ -4,8 +4,6 @@ use sdl2::video::Window;
 
 use crate::entity::Entity;
 
-// TODO: especially evident on asteroids, this renders the background of the
-// sprite. We should not render the background pixels of sprites.
 pub fn render(
     canvas: &mut Canvas<Window>,
     entity: &Entity,
