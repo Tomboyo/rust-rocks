@@ -62,8 +62,39 @@ fn main() {
         position::translate(&mut player, WIDTH as f32, HEIGHT as f32);
         asteroids.iter_mut()
             .for_each(|x| position::translate(x, WIDTH as f32, HEIGHT as f32));
-        bullets.iter_mut()
-            .for_each(|x| position::translate(x, WIDTH as f32, HEIGHT as f32));
+        
+        for bullet in &mut bullets {
+            position::translate(bullet, WIDTH as f32, HEIGHT as f32);
+        }
+
+        let mut collided_bullets = Vec::new();
+        let mut collided_asteroids = Vec::new();
+        for (i, bullet) in bullets.iter().enumerate() {
+            // check for collision with asteroid
+            for (j, asteroid) in asteroids.iter().enumerate() {
+                if position::collision(
+                        &position::CollisionMask::Circle {
+                            x: asteroid.x,
+                            y: asteroid.y,
+                            radius: 32.0 // TODO!
+                        },
+                        &position::CollisionMask::Point {
+                            x: bullet.x,
+                            y: bullet.y
+                        }) {
+                    collided_bullets.push(i);
+                    collided_asteroids.push(j);
+                }
+            }
+        }
+
+        for b in collided_bullets {
+            bullets.remove(b);
+        }
+
+        for a in collided_asteroids {
+            asteroids.remove(a);
+        }
 
         canvas.set_draw_color(Color::BLACK);
         canvas.clear();

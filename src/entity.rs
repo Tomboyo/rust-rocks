@@ -9,6 +9,12 @@ pub struct Entity<'a> {
     texture: Texture<'a>,
 }
 
+impl <'a> std::cmp::PartialEq for Entity<'a> {
+    fn eq(&self, other: &Self) -> bool {
+        self == other
+    }
+}
+
 // orientatin is in degrees
 impl <'a> Entity<'a> {
     pub fn new(
