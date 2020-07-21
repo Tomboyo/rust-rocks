@@ -36,15 +36,16 @@ fn main() {
     // events. Hold a vector of controllers until the game loop exits.
     let controllers: HashMap<u32, GameController> = open_controllers(&gcs);
 
-    let mut player = player::new(
-        &texture_creator,
-        (400, 300),
-        (0.0, 0.0)).expect("Failed to create player");
-    let mut asteroids: Vec<entity::Entity> = (1..5)
-        .map(|_| asteroid::new(&texture_creator, (WIDTH, HEIGHT)))
-        .map(|result| result.expect("Failed to create asteroid"))
-        .collect();
-    let mut bullets: Vec<entity::Entity> = vec![];
+    let mut system = entity::System::new(
+        player::new(
+            &texture_creator,
+            (400, 300),
+            (0.0, 0.0)).expect("Failed to create player"),
+        (1..5)
+            .map(|_| asteroid::new(&texture_creator, (WIDTH, HEIGHT)))
+            .map(|result| result.expect("Failed to create asteroid"))
+            .collect(),
+        Vec::new());
 
     'outer: loop {
         let events = event::process_events(&mut pump, &controllers);
@@ -53,25 +54,25 @@ fn main() {
             match event {
                 Event::Quit => break 'outer,
                 _ => if let Some(entity) =
-                        player::handle_event(&mut player, event, &texture_creator) {
-                    bullets.push(entity);
+                        player::handle_event(&mut system.player, event, &texture_creator) {
+                    system.bullets.push(entity);
                 }
             }
         }
 
-        position::translate(&mut player, WIDTH as f32, HEIGHT as f32);
-        asteroids.iter_mut()
+        position::translate(&mut system.player, WIDTH as f32, HEIGHT as f32);
+        system.asteroids.iter_mut()
             .for_each(|x| position::translate(x, WIDTH as f32, HEIGHT as f32));
         
-        for bullet in &mut bullets {
+        for bullet in &mut system.bullets {
             position::translate(bullet, WIDTH as f32, HEIGHT as f32);
         }
 
         let mut collided_bullets = Vec::new();
         let mut collided_asteroids = Vec::new();
-        for (i, bullet) in bullets.iter().enumerate() {
+        for (i, bullet) in system.bullets.iter().enumerate() {
             // check for collision with asteroid
-            for (j, asteroid) in asteroids.iter().enumerate() {
+            for (j, asteroid) in system.asteroids.iter().enumerate() {
                 if position::collision(
                         &position::CollisionMask::Circle {
                             x: asteroid.x,
@@ -89,23 +90,23 @@ fn main() {
         }
 
         for b in collided_bullets {
-            bullets.remove(b);
+            system.bullets.remove(b);
         }
 
         for a in collided_asteroids {
-            asteroids.remove(a);
+            system.asteroids.remove(a);
         }
 
         canvas.set_draw_color(Color::BLACK);
         canvas.clear();
 
-        render::render(&mut canvas, &player).expect("Failed to render player");
-        asteroids.iter()
+        render::render(&mut canvas, &system.player).expect("Failed to render player");
+        system.asteroids.iter()
             .for_each(|x| {
                 render::render(&mut canvas, x)
                     .expect("Failed to render asteroid");
             });
-        bullets.iter()
+        system.bullets.iter()
             .for_each(|x| {
                 render::render(&mut canvas, x)
                     .expect("Failed to render asteroid");
