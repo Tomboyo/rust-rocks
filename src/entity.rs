@@ -28,7 +28,7 @@ impl <'a> Entity<'a> {
         x: i32, y: i32,
         dx: f32, dy: f32,
         orientation: f32,
-        texture: Texture
+        texture: Texture,
     ) -> Entity {
         Entity {
             x: x as f32,
@@ -83,22 +83,17 @@ impl <'a> System<'a> {
         width: f32,
         height: f32,
     ) {
-        for event in events.iter() {
-            match event {
-                _ => if let Some(entity) =
-                        player::handle_event(&mut self.player, event, &texture_creator) {
-                    self.bullets.push(entity);
-                }
-            }
-        }
+        let mut bullets: Vec<Entity> = events.iter()
+            .map(|event| player::handle_event(&mut self.player, event, &texture_creator))
+            .filter(|x| matches!(x, Some(_)))
+            .map(Option::unwrap)
+            .collect();
+        self.bullets.append(&mut bullets);
 
-        position::translate(&mut self.player, width, height);
-        self.asteroids.iter_mut()
+        std::iter::once(&mut self.player)
+            .chain(self.asteroids.iter_mut())
+            .chain(self.bullets.iter_mut())
             .for_each(|x| position::translate(x, width, height));
-        
-        for bullet in &mut self.bullets {
-            position::translate(bullet, width, height);
-        }
 
         let mut collided_bullets = Vec::new();
         let mut collided_asteroids = Vec::new();
