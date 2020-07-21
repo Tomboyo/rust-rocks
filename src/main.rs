@@ -12,8 +12,6 @@ use sdl2::GameControllerSubsystem;
 use sdl2::controller::GameController;
 use sdl2::pixels::Color;
 
-use crate::event::Event;
-
 static WIDTH: u32 = 800;
 static HEIGHT: u32 = 600;
 
@@ -47,55 +45,13 @@ fn main() {
             .collect(),
         Vec::new());
 
-    'outer: loop {
+    loop {
         let events = event::process_events(&mut pump, &controllers);
-
-        for event in events.iter() {
-            match event {
-                Event::Quit => break 'outer,
-                _ => if let Some(entity) =
-                        player::handle_event(&mut system.player, event, &texture_creator) {
-                    system.bullets.push(entity);
-                }
-            }
+        if events.iter().any(|x| matches!(x, event::Event::Quit)) {
+            break;
         }
 
-        position::translate(&mut system.player, WIDTH as f32, HEIGHT as f32);
-        system.asteroids.iter_mut()
-            .for_each(|x| position::translate(x, WIDTH as f32, HEIGHT as f32));
-        
-        for bullet in &mut system.bullets {
-            position::translate(bullet, WIDTH as f32, HEIGHT as f32);
-        }
-
-        let mut collided_bullets = Vec::new();
-        let mut collided_asteroids = Vec::new();
-        for (i, bullet) in system.bullets.iter().enumerate() {
-            // check for collision with asteroid
-            for (j, asteroid) in system.asteroids.iter().enumerate() {
-                if position::collision(
-                        &position::CollisionMask::Circle {
-                            x: asteroid.x,
-                            y: asteroid.y,
-                            radius: 32.0 // TODO!
-                        },
-                        &position::CollisionMask::Point {
-                            x: bullet.x,
-                            y: bullet.y
-                        }) {
-                    collided_bullets.push(i);
-                    collided_asteroids.push(j);
-                }
-            }
-        }
-
-        for b in collided_bullets {
-            system.bullets.remove(b);
-        }
-
-        for a in collided_asteroids {
-            system.asteroids.remove(a);
-        }
+        system.tick(&events, &texture_creator, WIDTH as f32, HEIGHT as f32);
 
         canvas.set_draw_color(Color::BLACK);
         canvas.clear();

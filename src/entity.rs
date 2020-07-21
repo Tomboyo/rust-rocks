@@ -1,4 +1,10 @@
 use sdl2::render::Texture;
+use sdl2::render::TextureCreator;
+use sdl2::video::WindowContext;
+
+use crate::event::Event;
+use crate::player;
+use crate::position;
 
 pub struct Entity<'a> {
     pub x: f32,
@@ -65,6 +71,62 @@ impl <'a> System<'a> {
             player,
             asteroids,
             bullets
+        }
+    }
+
+    // TODO: width/height belong to a position system, not us
+    // texture_creator. Figure that out.
+    pub fn tick(
+        &mut self,
+        events: &Vec<Event>,
+        texture_creator: &'a TextureCreator<WindowContext>,
+        width: f32,
+        height: f32,
+    ) {
+        for event in events.iter() {
+            match event {
+                _ => if let Some(entity) =
+                        player::handle_event(&mut self.player, event, &texture_creator) {
+                    self.bullets.push(entity);
+                }
+            }
+        }
+
+        position::translate(&mut self.player, width, height);
+        self.asteroids.iter_mut()
+            .for_each(|x| position::translate(x, width, height));
+        
+        for bullet in &mut self.bullets {
+            position::translate(bullet, width, height);
+        }
+
+        let mut collided_bullets = Vec::new();
+        let mut collided_asteroids = Vec::new();
+        for (i, bullet) in self.bullets.iter().enumerate() {
+            // check for collision with asteroid
+            for (j, asteroid) in self.asteroids.iter().enumerate() {
+                if position::collision(
+                        &position::CollisionMask::Circle {
+                            x: asteroid.x,
+                            y: asteroid.y,
+                            radius: 32.0 // TODO!
+                        },
+                        &position::CollisionMask::Point {
+                            x: bullet.x,
+                            y: bullet.y
+                        }) {
+                    collided_bullets.push(i);
+                    collided_asteroids.push(j);
+                }
+            }
+        }
+
+        for b in collided_bullets {
+            self.bullets.remove(b);
+        }
+
+        for a in collided_asteroids {
+            self.asteroids.remove(a);
         }
     }
 }
