@@ -2,6 +2,7 @@ use crate::event::Event;
 use crate::player;
 use crate::position;
 use crate::render::Sprite;
+use crate::render::Textures;
 
 pub struct Entity {
     pub x: f32,
@@ -63,12 +64,12 @@ impl System {
     pub fn tick(
         &mut self,
         events: &Vec<Event>,
-        render_system: &crate::render::RenderSystem,
+        textures: &Textures,
         width: f32,
         height: f32,
     ) {
         let mut bullets: Vec<Entity> = events.iter()
-            .map(|event| player::handle_event(&mut self.player, event, render_system))
+            .map(|event| player::handle_event(&mut self.player, event, textures))
             .filter(|x| matches!(x, Some(_)))
             .map(Option::unwrap)
             .collect();

@@ -1,6 +1,7 @@
 use crate::entity::Entity;
 use crate::event::Event;
 use crate::render::Sprite;
+use crate::render::Textures;
 
 static MAX_SPEED: f32 = 5.0;
 
@@ -18,7 +19,7 @@ pub fn new(
 pub fn handle_event(
     player: &mut Entity,
     event: &Event,
-    render_system: &crate::render::RenderSystem
+    textures: &Textures
 ) -> Option<Entity> {
     match event {
         Event::LeftJoystick { joystick } => {
@@ -32,16 +33,16 @@ pub fn handle_event(
             }
             None
         },
-        Event::Fire => Some(fire(player, render_system)),
+        Event::Fire => Some(fire(player, textures)),
         _ => None
     }
 }
 
 pub fn fire(
     player: &Entity,
-    render_system: &crate::render::RenderSystem
+    textures: &Textures
 ) -> Entity {
-    let (width, height) = render_system.dimensions(&player.sprite);
+    let (width, height) = textures.dimensions(&player.sprite);
 
     let x = player.orientation_rad().cos() * width as f32
         + player.x;

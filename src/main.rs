@@ -10,7 +10,6 @@ use std::collections::HashMap;
 use log;
 use sdl2::GameControllerSubsystem;
 use sdl2::controller::GameController;
-use sdl2::pixels::Color;
 
 static WIDTH: u32 = 800;
 static HEIGHT: u32 = 600;
@@ -42,7 +41,7 @@ fn main() {
             .map(|_| asteroid::new((WIDTH, HEIGHT)))
             .collect(),
         Vec::new());
-    let render_system = render::RenderSystem::new(&texture_creator);
+    let textures = render::Textures::new(&texture_creator);
 
     loop {
         let events = event::process_events(&mut pump, &controllers);
@@ -50,18 +49,14 @@ fn main() {
             break;
         }
 
-        entity_system.tick(&events, &render_system, WIDTH as f32, HEIGHT as f32);
+        entity_system.tick(&events, &textures, WIDTH as f32, HEIGHT as f32);
 
-        canvas.set_draw_color(Color::BLACK);
-        canvas.clear();
-        std::iter::once(&entity_system.player)
-            .chain(entity_system.asteroids.iter())
-            .chain(entity_system.bullets.iter())
-            .for_each(|entity| {
-                render_system.render(&mut canvas, entity)
-                    .expect("Failed to render");
-            });
-        canvas.present();
+        render::render(
+            &mut canvas,
+            &textures,
+            std::iter::once(&entity_system.player)
+                .chain(entity_system.asteroids.iter())
+                .chain(entity_system.bullets.iter()));
 
         // caps fps at 60. Will need an adaptive sleep.
         std::thread::sleep(std::time::Duration::from_millis(16));
