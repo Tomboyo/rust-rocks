@@ -34,16 +34,15 @@ fn main() {
     // events. Hold a vector of controllers until the game loop exits.
     let controllers: HashMap<u32, GameController> = open_controllers(&gcs);
 
-    let mut system = entity::System::new(
+    let mut entity_system = entity::System::new(
         player::new(
-            &texture_creator,
             (400, 300),
-            (0.0, 0.0)).expect("Failed to create player"),
+            (0.0, 0.0)),
         (1..5)
-            .map(|_| asteroid::new(&texture_creator, (WIDTH, HEIGHT)))
-            .map(|result| result.expect("Failed to create asteroid"))
+            .map(|_| asteroid::new((WIDTH, HEIGHT)))
             .collect(),
         Vec::new());
+    let render_system = render::RenderSystem::new(&texture_creator);
 
     loop {
         let events = event::process_events(&mut pump, &controllers);
@@ -51,23 +50,17 @@ fn main() {
             break;
         }
 
-        system.tick(&events, &texture_creator, WIDTH as f32, HEIGHT as f32);
+        entity_system.tick(&events, &render_system, WIDTH as f32, HEIGHT as f32);
 
         canvas.set_draw_color(Color::BLACK);
         canvas.clear();
-
-        render::render(&mut canvas, &system.player).expect("Failed to render player");
-        system.asteroids.iter()
-            .for_each(|x| {
-                render::render(&mut canvas, x)
-                    .expect("Failed to render asteroid");
+        std::iter::once(&entity_system.player)
+            .chain(entity_system.asteroids.iter())
+            .chain(entity_system.bullets.iter())
+            .for_each(|entity| {
+                render_system.render(&mut canvas, entity)
+                    .expect("Failed to render");
             });
-        system.bullets.iter()
-            .for_each(|x| {
-                render::render(&mut canvas, x)
-                    .expect("Failed to render asteroid");
-            });
-
         canvas.present();
 
         // caps fps at 60. Will need an adaptive sleep.

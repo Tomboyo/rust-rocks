@@ -1,34 +1,31 @@
-use sdl2::render::Texture;
-use sdl2::render::TextureCreator;
-use sdl2::video::WindowContext;
-
 use crate::event::Event;
 use crate::player;
 use crate::position;
+use crate::render::Sprite;
 
-pub struct Entity<'a> {
+pub struct Entity {
     pub x: f32,
     pub y: f32,
     pub dx: f32,
     pub dy: f32,
     pub orientation: f32,
-    texture: Texture<'a>,
+    pub sprite: Sprite,
 }
 
 // TODO: remove pub!
-pub struct System<'a> {
-    pub player: Entity<'a>,
-    pub asteroids: Vec<Entity<'a>>,
-    pub bullets: Vec<Entity<'a>>,
+pub struct System {
+    pub player: Entity,
+    pub asteroids: Vec<Entity>,
+    pub bullets: Vec<Entity>,
 }
 
 // orientatin is in degrees
-impl <'a> Entity<'a> {
+impl Entity {
     pub fn new(
         x: i32, y: i32,
         dx: f32, dy: f32,
         orientation: f32,
-        texture: Texture,
+        sprite: Sprite,
     ) -> Entity {
         Entity {
             x: x as f32,
@@ -36,20 +33,8 @@ impl <'a> Entity<'a> {
             dx,
             dy,
             orientation,
-            texture: texture,
+            sprite,
         }
-    }
-
-    pub fn texture(&self) -> &Texture<'a> {
-        &self.texture
-    }
-
-    pub fn width(&self) -> u32 {
-        self.texture.query().width
-    }
-
-    pub fn height(&self) -> u32 {
-        self.texture.query().height
     }
 
     pub fn orientation_rad(&self) -> f32 {
@@ -61,12 +46,12 @@ impl <'a> Entity<'a> {
     }
 }
 
-impl <'a> System<'a> {
+impl System {
     pub fn new(
-        player: Entity<'a>,
-        asteroids: Vec<Entity<'a>>,
-        bullets: Vec<Entity<'a>>,
-    ) -> System<'a> {
+        player: Entity,
+        asteroids: Vec<Entity>,
+        bullets: Vec<Entity>,
+    ) -> System {
         System {
             player,
             asteroids,
@@ -75,16 +60,15 @@ impl <'a> System<'a> {
     }
 
     // TODO: width/height belong to a position system, not us
-    // texture_creator. Figure that out.
     pub fn tick(
         &mut self,
         events: &Vec<Event>,
-        texture_creator: &'a TextureCreator<WindowContext>,
+        render_system: &crate::render::RenderSystem,
         width: f32,
         height: f32,
     ) {
         let mut bullets: Vec<Entity> = events.iter()
-            .map(|event| player::handle_event(&mut self.player, event, &texture_creator))
+            .map(|event| player::handle_event(&mut self.player, event, render_system))
             .filter(|x| matches!(x, Some(_)))
             .map(Option::unwrap)
             .collect();
