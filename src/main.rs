@@ -6,6 +6,8 @@ mod position;
 mod render;
 
 use std::collections::HashMap;
+use std::time::Duration;
+use std::time::Instant;
 
 use log;
 use sdl2::GameControllerSubsystem;
@@ -40,7 +42,8 @@ fn main() {
         (1..5)
             .map(|_| asteroid::new((WIDTH, HEIGHT)))
             .collect(),
-        Vec::new());
+        Vec::new(),
+        Duration::from_secs(1));
     let textures = render::Textures::new(&texture_creator);
 
     loop {
@@ -49,7 +52,12 @@ fn main() {
             break;
         }
 
-        entity_system.tick(&events, &textures, WIDTH as f32, HEIGHT as f32);
+        entity_system.tick(
+            &events,
+            &textures,
+            WIDTH as f32,
+            HEIGHT as f32,
+            Instant::now());
 
         render::render(
             &mut canvas,

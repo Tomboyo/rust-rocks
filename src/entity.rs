@@ -1,3 +1,6 @@
+use std::time::Duration;
+use std::time::Instant;
+
 use crate::event::Event;
 use crate::player;
 use crate::position;
@@ -18,6 +21,8 @@ pub struct System {
     pub player: Entity,
     pub asteroids: Vec<Entity>,
     pub bullets: Vec<Entity>,
+    pub spawn_interval: Duration,
+    last_spawn: Instant
 }
 
 // orientatin is in degrees
@@ -52,11 +57,14 @@ impl System {
         player: Entity,
         asteroids: Vec<Entity>,
         bullets: Vec<Entity>,
+        spawn_interval: Duration
     ) -> System {
         System {
             player,
             asteroids,
-            bullets
+            bullets,
+            spawn_interval,
+            last_spawn: Instant::now()
         }
     }
 
@@ -67,6 +75,7 @@ impl System {
         textures: &Textures,
         width: f32,
         height: f32,
+        now: Instant
     ) {
         let mut bullets: Vec<Entity> = events.iter()
             .map(|event| player::handle_event(&mut self.player, event, textures))
@@ -107,6 +116,12 @@ impl System {
 
         for a in collided_asteroids {
             self.asteroids.remove(a);
+        }
+
+        if now.duration_since(self.last_spawn) >= self.spawn_interval
+            && self.asteroids.len() < 5 {
+            self.last_spawn = now;
+            self.asteroids.push(crate::asteroid::new((width as u32, height as u32)));
         }
     }
 }
