@@ -11,6 +11,7 @@ use sdl2::video::WindowContext;
 
 use crate::entity::Entity;
 
+#[derive(Clone)]
 pub enum Sprite {
     Asteroid,
     Bullet,
@@ -49,7 +50,7 @@ impl <'a> Textures<'a> {
         match sprite {
             Sprite::Asteroid => &self.asteroid,
             Sprite::Bullet => &self.bullet,
-            Sprite::Player => &self.player
+            Sprite::Player => &self.player,
         }
     }
 }

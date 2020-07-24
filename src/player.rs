@@ -1,19 +1,24 @@
 use crate::entity::Entity;
 use crate::event::Event;
+use crate::position::HitMask;
 use crate::render::Sprite;
 use crate::render::Textures;
 
 static MAX_SPEED: f32 = 5.0;
 
 pub fn new(
-    position: (i32, i32),
+    position: (f32, f32),
     speed: (f32, f32)
 ) -> Entity {
-    Entity::new(
-        position.0, position.1,
-        speed.0, speed.1,
-        0.0,
-        Sprite::Player)
+    Entity {
+        x: position.0,
+        y: position.1,
+        dx: speed.0,
+        dy: speed.1,
+        orientation: 0.0,
+        sprite: Sprite::Player,
+        hitmask: HitMask::None,
+    }
 }
 
 pub fn handle_event(
@@ -51,5 +56,11 @@ pub fn fire(
     let dx = player.orientation_rad().cos() * 10.0;
     let dy = player.orientation_rad().sin() * 10.0;
     
-    Entity::new(x as i32, y as i32, dx, dy, player.orientation_deg(), Sprite::Bullet)
+    Entity {
+        x, y,
+        dx, dy,
+        orientation: player.orientation_deg(),
+        sprite: Sprite::Bullet,
+        hitmask: HitMask::Point
+    }
 }

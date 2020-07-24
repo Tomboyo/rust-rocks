@@ -37,7 +37,7 @@ fn main() {
 
     let mut entity_system = entity::System::new(
         player::new(
-            (400, 300),
+            (400.0, 300.0),
             (0.0, 0.0)),
         (1..5)
             .map(|_| asteroid::new((WIDTH, HEIGHT)))

@@ -1,6 +1,7 @@
 use rand::Rng;
 
 use crate::entity::Entity;
+use crate::position::HitMask;
 use crate::render::Sprite;
 
 static MAX_SPEED: f32 = 7.0;
@@ -20,11 +21,15 @@ pub fn new(
         x = rng.gen::<f32>() * width as f32;
     }
 
-    Entity::new(
-        x as i32,
-        y as i32,
-        rng.gen::<f32>() * MAX_SPEED,
-        rng.gen::<f32>() * MAX_SPEED,
-        rng.gen::<f32>() * 360.0,
-        Sprite::Asteroid)
+    Entity {
+        x,
+        y,
+        dx: rng.gen::<f32>() * MAX_SPEED,
+        dy: rng.gen::<f32>() * MAX_SPEED,
+        orientation: rng.gen::<f32>() * 360.0,
+        sprite: Sprite::Asteroid,
+        hitmask: HitMask::Circle {
+            radius: 32.0
+        }
+    }
 }

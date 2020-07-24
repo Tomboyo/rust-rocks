@@ -4,9 +4,11 @@ use std::time::Instant;
 use crate::event::Event;
 use crate::player;
 use crate::position;
+use crate::position::HitMask;
 use crate::render::Sprite;
 use crate::render::Textures;
 
+#[derive(Clone)]
 pub struct Entity {
     pub x: f32,
     pub y: f32,
@@ -14,9 +16,9 @@ pub struct Entity {
     pub dy: f32,
     pub orientation: f32,
     pub sprite: Sprite,
+    pub hitmask: HitMask,
 }
 
-// TODO: remove pub!
 pub struct System {
     pub player: Entity,
     pub asteroids: Vec<Entity>,
@@ -27,22 +29,6 @@ pub struct System {
 
 // orientatin is in degrees
 impl Entity {
-    pub fn new(
-        x: i32, y: i32,
-        dx: f32, dy: f32,
-        orientation: f32,
-        sprite: Sprite,
-    ) -> Entity {
-        Entity {
-            x: x as f32,
-            y: y as f32,
-            dx,
-            dy,
-            orientation,
-            sprite,
-        }
-    }
-
     pub fn orientation_rad(&self) -> f32 {
         self.orientation * std::f32::consts::PI / 180.0
     }
@@ -94,16 +80,7 @@ impl System {
         for (i, bullet) in self.bullets.iter().enumerate() {
             // check for collision with asteroid
             for (j, asteroid) in self.asteroids.iter().enumerate() {
-                if position::collision(
-                        &position::CollisionMask::Circle {
-                            x: asteroid.x,
-                            y: asteroid.y,
-                            radius: 32.0 // TODO!
-                        },
-                        &position::CollisionMask::Point {
-                            x: bullet.x,
-                            y: bullet.y
-                        }) {
+                if position::collision(&asteroid, &bullet) {
                     collided_bullets.push(i);
                     collided_asteroids.push(j);
                 }
