@@ -11,7 +11,7 @@ use sdl2::video::WindowContext;
 
 use crate::entity::Entity;
 
-#[derive(Clone)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Sprite {
     Asteroid,
     Bullet,

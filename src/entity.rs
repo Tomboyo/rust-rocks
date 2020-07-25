@@ -8,7 +8,7 @@ use crate::position::HitMask;
 use crate::render::Sprite;
 use crate::render::Textures;
 
-#[derive(Clone)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Entity {
     pub x: f32,
     pub y: f32,
@@ -75,25 +75,7 @@ impl System {
             .chain(self.bullets.iter_mut())
             .for_each(|x| position::translate(x, width, height));
 
-        let mut collided_bullets = Vec::new();
-        let mut collided_asteroids = Vec::new();
-        for (i, bullet) in self.bullets.iter().enumerate() {
-            // check for collision with asteroid
-            for (j, asteroid) in self.asteroids.iter().enumerate() {
-                if position::collision(&asteroid, &bullet) {
-                    collided_bullets.push(i);
-                    collided_asteroids.push(j);
-                }
-            }
-        }
-
-        for b in collided_bullets {
-            self.bullets.remove(b);
-        }
-
-        for a in collided_asteroids {
-            self.asteroids.remove(a);
-        }
+        position::remove_collisions(&mut self.bullets, &mut self.asteroids);
 
         if now.duration_since(self.last_spawn) >= self.spawn_interval
             && self.asteroids.len() < 5 {
