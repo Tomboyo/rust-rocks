@@ -17,16 +17,22 @@ pub fn new(
     let mut y = 0.0;
     if rng.gen::<f32>() < 0.5 {
         y = rng.gen::<f32>() * height as f32;
+        if rng.gen::<f32>() < 0.5 {
+            x = width as f32;
+        }
     } else {
         x = rng.gen::<f32>() * width as f32;
+        if rng.gen::<f32>() < 0.5 {
+            y = height as f32;
+        }
     }
 
     Entity {
         x,
         y,
-        dx: rng.gen::<f32>() * MAX_SPEED,
-        dy: rng.gen::<f32>() * MAX_SPEED,
-        orientation: rng.gen::<f32>() * 360.0,
+        dx: rng.gen_range(-MAX_SPEED, MAX_SPEED),
+        dy: rng.gen_range(-MAX_SPEED, MAX_SPEED),
+        orientation: rng.gen_range(0.0, 360.0),
         sprite: Sprite::Asteroid,
         hitmask: HitMask::Circle {
             radius: 32.0
