@@ -27,7 +27,7 @@ fn main() {
     let mut pump = context.event_pump().expect("Failed to init the event pump");
     let video_subsystem = context.video().expect("Failed to init video subsystem");
     let window = video_subsystem
-        .window("Asteroids-Rs", 800, 600)
+        .window("Rust Rocks", 800, 600)
         .position_centered()
         .build()
         .expect("Failed to create window");

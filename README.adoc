@@ -1,5 +1,29 @@
-= Asteroids-Rs
+= Rust Rocks
 
-== Sprites by MillionthVector
+This is a for-fun Asteroids-like game implemented in Rust using SDL2 bindings.
 
-https://millionthvector.blogspot.com/p/free-sprites.html
+== Controls
+
+At time of writing, this game responds to xbox-like gamepad controls only (specifically anything supported by SDL2's game controller subsystem). I use a Logitech F710 for testing.
+
+At the title screen, press `Right Bumper` to start the game.
+
+Use the `Left Joystick` to move, the `Right Joystick` to aim, and the `Right Bumper` to shoot.
+
+== Compatibility
+
+I currently test on Linux, but ostensibly this should compile to other operating systems. I have not yet tried.
+
+== Build
+
+You may need to install development packages for SDL2 since not all of the features are bundled. These may include (on Fedora) `SDL2-devel` and `SDL2_image-devel`.
+
+Otherwise, simply invoke `cargo build` to compile.
+
+== Run
+
+Invoke `cargo run` from the root directory. The executable tries to load sprites from `./resources`, so the working directory is significant.
+
+== Acknowledgements
+
+The player ship sprite this project originally used is "speedship" by MillionthVector (https://millionthvector.blogspot.com/p/free-sprites.html[source]), distributed under https://creativecommons.org/licenses/by/4.0/[creative-commons 4.0]. The current all-white sprite is a modified, monochromatic version of speedship.
