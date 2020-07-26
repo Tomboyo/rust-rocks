@@ -22,7 +22,7 @@ pub fn new(
         dy: 0.0,
         orientation: 0.0,
         sprite: Sprite::Player,
-        hitmask: HitMask::None,
+        hitmask: HitMask::Point,
         timeouts: Vec::new(),
     }
 }

@@ -24,22 +24,25 @@ pub enum HitMask {
 }
 
 /// For each vector, remove all Entities from it which collide with Entities
-/// from the other Vector.
+/// from the other Vector. Returns the number of entities removed from each
+/// vector.
 /// 
 /// Entities which collide with other Entities in the _same_ vector are ignored.
 pub fn remove_collisions(
     a: &mut Vec<Entity>,
     b: &mut Vec<Entity>
-) {
+) -> (usize, usize) {
     let (collided_a, collided_b) = collisions(a, b);
 
-    remove_all(a, collided_a);
-    remove_all(b, collided_b);
+    remove_all(a, &collided_a);
+    remove_all(b, &collided_b);
+
+    (collided_a.len(), collided_b.len())
 }
 
 fn remove_all(
     from: &mut Vec<Entity>,
-    indices: HashSet<usize>
+    indices: &HashSet<usize>
 ) {
     let mut i: usize = 0;
     from.retain(|_| {
@@ -73,7 +76,7 @@ fn collisions(
     (left_hits, right_hits)
 }
 
-fn is_collision(a: &Entity, b: &Entity) -> bool {
+pub fn is_collision(a: &Entity, b: &Entity) -> bool {
     match (&a.hitmask, &b.hitmask) {
         (HitMask::Circle { radius }, HitMask::Point) => {
             distance((a.x, a.y), (b.x, b.y)) <= *radius
