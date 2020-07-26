@@ -21,7 +21,8 @@ pub enum Sprite {
 pub struct Textures<'a> {
     asteroid: Texture<'a>,
     bullet: Texture<'a>,
-    player: Texture<'a>
+    player: Texture<'a>,
+    pub title: Texture<'a>,
 }
 
 impl <'a> Textures<'a> {
@@ -32,6 +33,7 @@ impl <'a> Textures<'a> {
             asteroid: load_texture(texture_creator, "asteroid.bmp"),
             bullet: load_texture(texture_creator, "bullet.bmp"),
             player: load_texture(texture_creator, "player-ship.bmp"),
+            title: load_texture(texture_creator, "title.bmp"),
         }
     }
 

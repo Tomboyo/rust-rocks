@@ -1,4 +1,5 @@
 pub mod game;
+pub mod title;
 
 use std::time::Instant;
 
@@ -8,9 +9,7 @@ use sdl2::video::Window;
 use crate::event::Event;
 use crate::render::Textures;
 
-//TODO
 pub enum RoomTransition {
-    Title,
     Game,
 }
 
@@ -22,6 +21,7 @@ pub struct Context<'a> {
 pub trait Room {
     fn run(
         &mut self,
+        context: &mut Context,
         events: Vec<Event>,
         now: Instant
     ) -> Option<RoomTransition>;

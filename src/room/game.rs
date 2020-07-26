@@ -12,8 +12,7 @@ use crate::room::Context;
 use crate::room::Room;
 use crate::room::RoomTransition;
 
-pub struct GameRoom<'a> {
-    context: &'a mut Context<'a>,
+pub struct GameRoom {
     player: Entity,
     asteroids: Vec<Entity>,
     bullets: Vec<Entity>,
@@ -21,13 +20,12 @@ pub struct GameRoom<'a> {
     last_spawn: Instant
 }
 
-impl <'a> GameRoom<'a> {
+impl GameRoom {
     pub fn new(
-        context: &'a mut Context<'a>
+        context: &mut Context
     ) -> Self {
         let (width, height) = context.canvas.window().size();
         Self {
-            context,
             player: init_player(width, height),
             asteroids: init_asteroids(width, height),
             bullets: Vec::new(),
@@ -36,10 +34,13 @@ impl <'a> GameRoom<'a> {
         }
     }
 
-    fn render(&mut self) {
+    fn render(
+        &mut self,
+        context: &mut Context,
+    ) {
         render::render(
-            self.context.canvas,
-            self.context.textures,
+            context.canvas,
+            context.textures,
             std::iter::once(&self.player)
                 .chain(self.asteroids.iter())
                 .chain(self.bullets.iter()));
@@ -58,9 +59,10 @@ fn init_asteroids(width: u32, height: u32) -> Vec<Entity> {
         .collect()
 }
 
-impl <'a> Room for GameRoom<'a> {
+impl Room for GameRoom {
     fn run(
         &mut self,
+        context: &mut Context,
         events: Vec<Event>,
         now: Instant
     ) -> Option<RoomTransition> {
@@ -68,13 +70,13 @@ impl <'a> Room for GameRoom<'a> {
             .map(|event| player::handle_event(
                 &mut self.player,
                 event,
-                self.context.textures))
+                context.textures))
             .filter(Option::is_some)
             .map(Option::unwrap)
             .collect();
         self.bullets.append(&mut bullets);
 
-        let (width, height) = self.context.canvas.window().size();
+        let (width, height) = context.canvas.window().size();
         std::iter::once(&mut self.player)
             .chain(self.asteroids.iter_mut())
             .chain(self.bullets.iter_mut())
@@ -99,7 +101,7 @@ impl <'a> Room for GameRoom<'a> {
             self.asteroids.push(asteroid::new(width, height));
         }
 
-        self.render();
+        self.render(context);
 
         None
     }

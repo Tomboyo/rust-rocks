@@ -15,7 +15,9 @@ use sdl2::controller::GameController;
 
 use room::Context;
 use room::Room;
+use room::RoomTransition;
 use room::game::GameRoom;
+use room::title::TitleRoom;
 
 fn main() {
     env_logger::init();
@@ -42,7 +44,7 @@ fn main() {
         textures: &textures
     };
 
-    let mut room = GameRoom::new(&mut context);
+    let mut room: Box<dyn Room> = Box::new(TitleRoom::new(&mut context));
 
     loop {
         let events = event::process_events(&mut pump, &controllers);
@@ -50,9 +52,13 @@ fn main() {
             break;
         }
 
-        room.run(
-            events,
-            Instant::now());
+        if let Some(transition) = room.run(&mut context, events, Instant::now()) {
+            match transition {
+                RoomTransition::Game => {
+                    room = Box::new(GameRoom::new(&mut context));
+                }
+            }
+        }
 
         // TODO: sdl2 has framerate control features
         std::thread::sleep(std::time::Duration::from_millis(16));
