@@ -4,17 +4,18 @@ mod entity;
 mod player;
 mod position;
 mod render;
+mod room;
 
 use std::collections::HashMap;
-use std::time::Duration;
 use std::time::Instant;
 
 use log;
 use sdl2::GameControllerSubsystem;
 use sdl2::controller::GameController;
 
-static WIDTH: u32 = 800;
-static HEIGHT: u32 = 600;
+use room::Context;
+use room::Room;
+use room::game::GameRoom;
 
 fn main() {
     env_logger::init();
@@ -24,27 +25,24 @@ fn main() {
     let mut pump = context.event_pump().expect("Failed to init the event pump");
     let video_subsystem = context.video().expect("Failed to init video subsystem");
     let window = video_subsystem
-        .window("Asteroids-Rs", WIDTH, HEIGHT)
+        .window("Asteroids-Rs", 800, 600)
         .position_centered()
         .build()
         .expect("Failed to create window");
     let mut canvas = window.into_canvas().build().expect("Failed to create canvas");
     let texture_creator = canvas.texture_creator();
-
+    
     // Controllers self-close when dropped, which stops them from generating
     // events. Hold a vector of controllers until the game loop exits.
     let controllers: HashMap<u32, GameController> = open_controllers(&gcs);
-
-    let mut entity_system = entity::System::new(
-        player::new(
-            (400.0, 300.0),
-            (0.0, 0.0)),
-        (1..5)
-            .map(|_| asteroid::new((WIDTH, HEIGHT)))
-            .collect(),
-        Vec::new(),
-        Duration::from_secs(1));
+    
     let textures = render::Textures::new(&texture_creator);
+    let mut context = Context {
+        canvas: &mut canvas,
+        textures: &textures
+    };
+
+    let mut room = GameRoom::new(&mut context);
 
     loop {
         let events = event::process_events(&mut pump, &controllers);
@@ -52,21 +50,11 @@ fn main() {
             break;
         }
 
-        entity_system.tick(
-            &events,
-            &textures,
-            WIDTH as f32,
-            HEIGHT as f32,
+        room.run(
+            events,
             Instant::now());
 
-        render::render(
-            &mut canvas,
-            &textures,
-            std::iter::once(&entity_system.player)
-                .chain(entity_system.asteroids.iter())
-                .chain(entity_system.bullets.iter()));
-
-        // caps fps at 60. Will need an adaptive sleep.
+        // TODO: sdl2 has framerate control features
         std::thread::sleep(std::time::Duration::from_millis(16));
     }
 }

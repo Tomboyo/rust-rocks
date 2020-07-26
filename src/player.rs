@@ -12,14 +12,14 @@ use crate::render::Textures;
 static MAX_SPEED: f32 = 5.0;
 
 pub fn new(
-    position: (f32, f32),
-    speed: (f32, f32)
+    x: f32,
+    y: f32
 ) -> Entity {
     Entity {
-        x: position.0,
-        y: position.1,
-        dx: speed.0,
-        dy: speed.1,
+        x,
+        y,
+        dx: 0.0,
+        dy: 0.0,
         orientation: 0.0,
         sprite: Sprite::Player,
         hitmask: HitMask::None,

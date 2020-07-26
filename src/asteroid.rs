@@ -7,10 +7,10 @@ use crate::render::Sprite;
 static MAX_SPEED: f32 = 7.0;
 
 pub fn new(
-    bounds: (u32, u32),
+    width: u32,
+    height: u32,
 ) -> Entity {
     let mut rng = rand::thread_rng();
-    let (width, height) = bounds;
 
     // Choose (x, y) on the boundaries of the canvas
     let mut x = 0.0;
