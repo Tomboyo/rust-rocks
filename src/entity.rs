@@ -8,7 +8,7 @@ use crate::position::HitMask;
 use crate::render::Sprite;
 use crate::render::Textures;
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Debug, PartialEq)]
 pub struct Entity {
     pub x: f32,
     pub y: f32,
@@ -17,6 +17,12 @@ pub struct Entity {
     pub orientation: f32,
     pub sprite: Sprite,
     pub hitmask: HitMask,
+    pub timeouts: Vec::<Timeout>,
+}
+
+#[derive(Debug, PartialEq, Eq)]
+pub enum Timeout {
+    Expire { when: Instant },
 }
 
 pub struct System {
@@ -76,6 +82,16 @@ impl System {
             .for_each(|x| position::translate(x, width, height));
 
         position::remove_collisions(&mut self.bullets, &mut self.asteroids);
+
+        self.bullets.retain(|x| {
+            x.timeouts.iter().all(|t| {
+                match t {
+                    Timeout::Expire { when } => {
+                        Instant::now() < *when
+                    }
+                }
+            })
+        });
 
         if now.duration_since(self.last_spawn) >= self.spawn_interval
             && self.asteroids.len() < 5 {

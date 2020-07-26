@@ -104,7 +104,8 @@ mod test {
             dx: 0.0, dy: 0.0,
             orientation: 0.0,
             sprite: Sprite::Asteroid,
-            hitmask
+            hitmask,
+            timeouts: Vec::new(),
         }
     }
 

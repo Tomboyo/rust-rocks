@@ -36,6 +36,7 @@ pub fn new(
         sprite: Sprite::Asteroid,
         hitmask: HitMask::Circle {
             radius: 32.0
-        }
+        },
+        timeouts: Vec::new(),
     }
 }

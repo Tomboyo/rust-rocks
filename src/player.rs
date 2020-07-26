@@ -1,4 +1,9 @@
+use std::ops::Add;
+use std::time::Duration;
+use std::time::Instant;
+
 use crate::entity::Entity;
+use crate::entity::Timeout;
 use crate::event::Event;
 use crate::position::HitMask;
 use crate::render::Sprite;
@@ -18,6 +23,7 @@ pub fn new(
         orientation: 0.0,
         sprite: Sprite::Player,
         hitmask: HitMask::None,
+        timeouts: Vec::new(),
     }
 }
 
@@ -61,6 +67,11 @@ pub fn fire(
         dx, dy,
         orientation: player.orientation_deg(),
         sprite: Sprite::Bullet,
-        hitmask: HitMask::Point
+        hitmask: HitMask::Point,
+        timeouts: vec![
+            Timeout::Expire {
+                when: Instant::now().add(Duration::from_secs(3)),
+            }
+        ],
     }
 }
