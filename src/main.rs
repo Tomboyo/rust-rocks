@@ -39,12 +39,12 @@ fn main() {
     let controllers: HashMap<u32, GameController> = open_controllers(&gcs);
     
     let textures = render::Textures::new(&texture_creator);
-    let mut context = Context {
+    let mut room_context = Context {
         canvas: &mut canvas,
         textures: &textures
     };
 
-    let mut room: Box<dyn Room> = Box::new(TitleRoom::new(&mut context));
+    let mut room: Box<dyn Room> = Box::new(TitleRoom::new(&mut room_context));
 
     loop {
         let events = event::process_events(&mut pump, &controllers);
@@ -52,10 +52,10 @@ fn main() {
             break;
         }
 
-        if let Some(transition) = room.run(&mut context, events, Instant::now()) {
+        if let Some(transition) = room.run(&mut room_context, events, Instant::now()) {
             match transition {
                 RoomTransition::Game => {
-                    room = Box::new(GameRoom::new(&mut context));
+                    room = Box::new(GameRoom::new(&mut room_context));
                 }
             }
         }
