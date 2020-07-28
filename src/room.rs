@@ -19,10 +19,14 @@ pub struct Context<'a> {
 }
 
 pub trait Room {
-    fn run(
+    fn update(
         &mut self,
         context: &mut Context,
         events: Vec<Event>,
         now: Instant
     ) -> Option<RoomTransition>;
+
+    fn render(
+        &self,
+        context: &mut Context);
 }

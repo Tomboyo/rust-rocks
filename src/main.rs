@@ -52,12 +52,14 @@ fn main() {
             break;
         }
 
-        if let Some(transition) = room.run(&mut room_context, events, Instant::now()) {
+        if let Some(transition) = room.update(&mut room_context, events, Instant::now()) {
             match transition {
                 RoomTransition::Game => {
                     room = Box::new(GameRoom::new(&mut room_context));
                 }
             }
+        } else {
+            room.render(&mut room_context);
         }
 
         // TODO: sdl2 has framerate control features

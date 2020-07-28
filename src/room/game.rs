@@ -43,18 +43,6 @@ impl GameRoom {
             }
         }
     }
-
-    fn render(
-        &mut self,
-        context: &mut Context,
-    ) {
-        render::render(
-            context.canvas,
-            context.textures,
-            std::iter::once(&self.player)
-                .chain(self.asteroids.iter())
-                .chain(self.bullets.iter()));
-    }
 }
 
 fn init_player(width: u32, height: u32) -> Entity {
@@ -70,7 +58,7 @@ fn init_asteroids(width: u32, height: u32) -> Vec<Entity> {
 }
 
 impl Room for GameRoom {
-    fn run(
+    fn update(
         &mut self,
         context: &mut Context,
         events: Vec<Event>,
@@ -128,8 +116,18 @@ impl Room for GameRoom {
             self.asteroids.push(asteroid::new(width, height));
         }
 
-        self.render(context);
-
         None
+    }
+
+    fn render(
+        &self,
+        context: &mut Context,
+    ) {
+        render::render(
+            context.canvas,
+            context.textures,
+            std::iter::once(&self.player)
+                .chain(self.asteroids.iter())
+                .chain(self.bullets.iter()));
     }
 }
