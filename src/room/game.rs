@@ -8,7 +8,6 @@ use sdl2::controller::Button;
 use crate::asteroid;
 use crate::entity::Entity;
 use crate::entity::Timeout;
-use crate::player;
 use crate::player::Player;
 use crate::position;
 use crate::position::HitMask;
@@ -38,8 +37,8 @@ impl GameRoom {
     ) -> Self {
         let (width, height) = context.canvas.window().size();
         Self {
-            player: init_player(width, height),
-            asteroids: init_asteroids(width, height),
+            player: Self::init_player(width, height),
+            asteroids: Self::init_asteroids(width, height),
             bullets: Vec::new(),
             spawn_interval: Duration::from_secs(1),
             last_spawn: Instant::now(),
@@ -49,18 +48,18 @@ impl GameRoom {
             }
         }
     }
-}
 
-fn init_player(width: u32, height: u32) -> Player {
-    Player::new(
-        (width / 2) as f32,
-        (height / 2) as f32)
-}
+    fn init_player(width: u32, height: u32) -> Player {
+        Player::new(
+            (width / 2) as f32,
+            (height / 2) as f32)
+    }
 
-fn init_asteroids(width: u32, height: u32) -> Vec<Entity> {
-    (1..5)
-        .map(|_| asteroid::new(width, height))
-        .collect()
+    fn init_asteroids(width: u32, height: u32) -> Vec<Entity> {
+        (1..5)
+            .map(|_| asteroid::new(width, height))
+            .collect()
+    }
 }
 
 
@@ -79,47 +78,10 @@ impl Room for GameRoom {
             self.fire_bullet(context);
         }
 
-        let (width, height) = context.canvas.window().size();
-        std::iter::once(&mut self.player.entity)
-            .chain(self.asteroids.iter_mut())
-            .chain(self.bullets.iter_mut())
-            .for_each(|x| position::translate(
-                x, width as f32, height as f32));
-
-        let (_, hits) = position::remove_collisions(
-            &mut self.bullets,
-            &mut self.asteroids);
-        self.score.asteroids_destroyed += hits as u16;
-
-        if self.score.last_death.elapsed().as_secs() > 5
-        && self.asteroids.iter()
-            .any(|x| position::is_collision(&self.player.entity, x))
-        {
-            log::info!(
-                "Hit! You destroyed {} asteroids in {} seconds",
-                self.score.asteroids_destroyed,
-                self.score.last_death.elapsed().as_secs());
-            self.score = Score {
-                asteroids_destroyed: 0,
-                last_death: Instant::now()
-            }
-        }
-
-        self.bullets.retain(|x| {
-            x.timeouts.iter().all(|t| {
-                match t {
-                    Timeout::Expire { when } => {
-                        Instant::now() < *when
-                    }
-                }
-            })
-        });
-
-        if now.duration_since(self.last_spawn) >= self.spawn_interval
-            && self.asteroids.len() < 5 {
-            self.last_spawn = now;
-            self.asteroids.push(asteroid::new(width, height));
-        }
+        self.move_entities(context);
+        self.handle_collisions();
+        self.handle_timeouts();
+        self.spawn_asteroids(now, context);
 
         None
     }
@@ -173,5 +135,57 @@ impl GameRoom {
                     }
                 ],
             });
+    }
+
+    fn move_entities(&mut self, context: &Context) {
+        let (width, height) = context.canvas.window().size();
+        std::iter::once(&mut self.player.entity)
+            .chain(self.asteroids.iter_mut())
+            .chain(self.bullets.iter_mut())
+            .for_each(|x| position::translate(
+                x, width as f32, height as f32));
+    }
+
+    fn handle_collisions(&mut self) {
+        let (_, hits) = position::remove_collisions(
+            &mut self.bullets,
+            &mut self.asteroids);
+        self.score.asteroids_destroyed += hits as u16;
+
+        if self.score.last_death.elapsed().as_secs() > 5
+        && self.asteroids.iter()
+            .any(|x| position::is_collision(&self.player.entity, x))
+        {
+            log::info!(
+                "Hit! You destroyed {} asteroids in {} seconds",
+                self.score.asteroids_destroyed,
+                self.score.last_death.elapsed().as_secs());
+            self.score = Score {
+                asteroids_destroyed: 0,
+                last_death: Instant::now()
+            }
+        }
+    }
+
+    fn handle_timeouts(&mut self) {
+        self.bullets.retain(|x| {
+            x.timeouts.iter().all(|t| {
+                match t {
+                    Timeout::Expire { when } => {
+                        Instant::now() < *when
+                    }
+                }
+            })
+        });
+    }
+
+    fn spawn_asteroids(&mut self, now: Instant, context: &Context) {
+        let (width, height) = context.canvas.window().size();
+
+        if now.duration_since(self.last_spawn) >= self.spawn_interval
+        && self.asteroids.len() < 5 {
+            self.last_spawn = now;
+            self.asteroids.push(asteroid::new(width, height));
+        }
     }
 }
