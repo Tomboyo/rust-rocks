@@ -1,19 +1,25 @@
+use std::ops::Add;
 use std::time::Duration;
 use std::time::Instant;
 
+use sdl2::event::Event;
+use sdl2::controller::Button;
+
 use crate::asteroid;
-use crate::event::Event;
 use crate::entity::Entity;
 use crate::entity::Timeout;
 use crate::player;
+use crate::player::Player;
 use crate::position;
+use crate::position::HitMask;
 use crate::render;
+use crate::render::Sprite;
 use crate::room::Context;
 use crate::room::Room;
 use crate::room::RoomTransition;
 
 pub struct GameRoom {
-    player: Entity,
+    player: Player,
     asteroids: Vec<Entity>,
     bullets: Vec<Entity>,
     spawn_interval: Duration,
@@ -45,8 +51,8 @@ impl GameRoom {
     }
 }
 
-fn init_player(width: u32, height: u32) -> Entity {
-    player::new(
+fn init_player(width: u32, height: u32) -> Player {
+    Player::new(
         (width / 2) as f32,
         (height / 2) as f32)
 }
@@ -57,6 +63,7 @@ fn init_asteroids(width: u32, height: u32) -> Vec<Entity> {
         .collect()
 }
 
+
 impl Room for GameRoom {
     fn update(
         &mut self,
@@ -64,18 +71,16 @@ impl Room for GameRoom {
         events: Vec<Event>,
         now: Instant
     ) -> Option<RoomTransition> {
-        let mut bullets: Vec<Entity> = events.iter()
-            .map(|event| player::handle_event(
-                &mut self.player,
-                event,
-                context.textures))
-            .filter(Option::is_some)
-            .map(Option::unwrap)
-            .collect();
-        self.bullets.append(&mut bullets);
+        events.iter().for_each(|event| self.player.consume_input(
+            context.controllers,
+            event));
+        
+        if events.iter().any(Self::is_fire_bullet_event) {
+            self.fire_bullet(context);
+        }
 
         let (width, height) = context.canvas.window().size();
-        std::iter::once(&mut self.player)
+        std::iter::once(&mut self.player.entity)
             .chain(self.asteroids.iter_mut())
             .chain(self.bullets.iter_mut())
             .for_each(|x| position::translate(
@@ -88,7 +93,7 @@ impl Room for GameRoom {
 
         if self.score.last_death.elapsed().as_secs() > 5
         && self.asteroids.iter()
-            .any(|x| position::is_collision(&self.player, x))
+            .any(|x| position::is_collision(&self.player.entity, x))
         {
             log::info!(
                 "Hit! You destroyed {} asteroids in {} seconds",
@@ -126,8 +131,47 @@ impl Room for GameRoom {
         render::render(
             context.canvas,
             context.textures,
-            std::iter::once(&self.player)
+            std::iter::once(&self.player.entity)
                 .chain(self.asteroids.iter())
                 .chain(self.bullets.iter()));
+    }
+}
+
+impl GameRoom {
+    fn is_fire_bullet_event(event: &Event) -> bool {
+        match event {
+            Event::ControllerButtonDown { button, .. }
+            if *button == Button::RightShoulder => true,
+            _ => false
+        }
+    }
+
+    fn fire_bullet(
+        &mut self,
+        context: &mut Context,
+    ) {
+        let (width, height) = context.textures.dimensions(
+            &self.player.entity.sprite);
+
+        let x = self.player.entity.orientation_rad().cos() * width as f32
+            + self.player.entity.x;
+        let y = self.player.entity.orientation_rad().sin() * height as f32
+            + self.player.entity.y;
+        let dx = self.player.entity.orientation_rad().cos() * 10.0;
+        let dy = self.player.entity.orientation_rad().sin() * 10.0;
+
+        self.bullets.push(
+            Entity {
+                x, y,
+                dx, dy,
+                orientation: self.player.entity.orientation_deg(),
+                sprite: Sprite::Bullet,
+                hitmask: HitMask::Point,
+                timeouts: vec![
+                    Timeout::Expire {
+                        when: Instant::now().add(Duration::from_secs(3)),
+                    }
+                ],
+            });
     }
 }

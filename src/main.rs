@@ -1,23 +1,21 @@
 mod asteroid;
-mod event;
 mod entity;
+mod input;
 mod player;
 mod position;
 mod render;
 mod room;
 
-use std::collections::HashMap;
 use std::time::Instant;
 
-use log;
-use sdl2::GameControllerSubsystem;
-use sdl2::controller::GameController;
+use sdl2::event::Event;
 
-use room::Context;
-use room::Room;
-use room::RoomTransition;
-use room::game::GameRoom;
-use room::title::TitleRoom;
+use crate::input::ControllersMap;
+use crate::room::Context;
+use crate::room::Room;
+use crate::room::RoomTransition;
+use crate::room::game::GameRoom;
+use crate::room::title::TitleRoom;
 
 fn main() {
     env_logger::init();
@@ -34,21 +32,22 @@ fn main() {
     let mut canvas = window.into_canvas().build().expect("Failed to create canvas");
     let texture_creator = canvas.texture_creator();
     
-    // Controllers self-close when dropped, which stops them from generating
-    // events. Hold a vector of controllers until the game loop exits.
-    let controllers: HashMap<u32, GameController> = open_controllers(&gcs);
+    // Note: Controllers self-close when dropped, which stops them from
+    // generating events.
+    let controllers = ControllersMap::open(&gcs);
     
     let textures = render::Textures::new(&texture_creator);
     let mut room_context = Context {
         canvas: &mut canvas,
-        textures: &textures
+        textures: &textures,
+        controllers: &controllers,
     };
 
     let mut room: Box<dyn Room> = Box::new(TitleRoom::new(&mut room_context));
 
     loop {
-        let events = event::process_events(&mut pump, &controllers);
-        if events.iter().any(|x| matches!(x, event::Event::Quit)) {
+        let events: Vec<Event> = pump.poll_iter().collect();
+        if events.iter().any(|x| matches!(x, Event::Quit {..})) {
             break;
         }
 
@@ -65,16 +64,4 @@ fn main() {
         // TODO: sdl2 has framerate control features
         std::thread::sleep(std::time::Duration::from_millis(16));
     }
-}
-
-fn open_controllers(gcs: &GameControllerSubsystem) -> HashMap<u32, GameController> {
-    (0..gcs.num_joysticks().expect("Unable to iterate joysticks"))
-        .map(|index| (index, gcs.open(index)))
-        .inspect(|(_, result)| match result {
-            Ok(controller) => log::info!("Opened controller {}", controller.name()),
-            Err(e) => log::warn!("Failed to open controller: {}", e)
-        })
-        .filter(|(_, result)| result.is_ok())
-        .map(|(index, result)| (index, result.unwrap()))
-        .collect()
 }

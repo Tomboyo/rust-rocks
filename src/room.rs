@@ -3,10 +3,11 @@ pub mod title;
 
 use std::time::Instant;
 
+use sdl2::event::Event;
 use sdl2::render::Canvas;
 use sdl2::video::Window;
 
-use crate::event::Event;
+use crate::input::ControllersMap;
 use crate::render::Textures;
 
 pub enum RoomTransition {
@@ -16,6 +17,7 @@ pub enum RoomTransition {
 pub struct Context<'a> {
     pub canvas: &'a mut Canvas<Window>,
     pub textures: &'a Textures<'a>,
+    pub controllers: &'a ControllersMap,
 }
 
 pub trait Room {

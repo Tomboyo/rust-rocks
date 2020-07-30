@@ -1,6 +1,7 @@
 use std::time::Instant;
 
-use crate::event::Event;
+use sdl2::event::Event;
+
 use crate::room::Room;
 use crate::room::RoomTransition;
 use crate::room::Context;
@@ -11,18 +12,26 @@ impl TitleRoom {
     pub fn new(_context: &mut Context) -> Self {
         TitleRoom {}
     }
+
+    fn any_key(event: &Event) -> bool {
+        match event {
+            Event::ControllerButtonDown { .. } => true,
+            Event::KeyDown { .. } => true,
+            _ => false
+        }
+    }
 }
 
 impl Room for TitleRoom{
     fn update(
         &mut self,
-        context: &mut Context,
+        _context: &mut Context,
         events: Vec<Event>,
         _now: Instant
     ) -> Option<RoomTransition> {
         // Not quite "press any key;" press "Fire" to start game.
         if events.iter()
-            .any(|e| matches!(e, Event::Fire)) {
+            .any(Self::any_key) {
                 Some(RoomTransition::Game)
             } else {
                 None

@@ -1,24 +1,23 @@
 pub struct Joystick {
-    x: i16,
-    y: i16,
+    pub x: i16,
+    pub y: i16,
+    pub which_joystick: WhichJoystick
+}
+
+pub enum WhichJoystick {
+    Left,
+    Right,
 }
 
 impl Joystick {
-    pub fn new(x: i16, y: i16) -> Joystick {
-        Joystick {
-            x,
-            y
-        }
+    /// Get the joystick x reading normalized between -1.0 and 1.0, inclusive.
+    pub fn normal_x(&self) -> f32 {
+        Self::normalize_axis(self.x)
     }
 
-    // Get the joystick x reading normalized between -1.0 and 1.0, inclusive.
-    pub fn unit_x_axis(&self) -> f32 {
-        Joystick::normalize_axis(self.x)
-    }
-
-    // Get the joystick y reading normalized between -1.0 and 1.0, inclusive.
-    pub fn unit_y_axis(&self) -> f32 {
-        Joystick::normalize_axis(self.y)
+    /// Get the joystick y reading normalized between -1.0 and 1.0, inclusive.
+    pub fn normal_y(&self) -> f32 {
+        Self::normalize_axis(self.y)
     }
 
     // Convert an axis i16 reading to f64 between -1.0 and 1.0 inclusive
@@ -43,7 +42,7 @@ impl Joystick {
         if self.x == 0 && self.y == 0 {
             None
         } else {
-            let (x, y) = (self.unit_x_axis(), self.unit_y_axis());
+            let (x, y) = (self.normal_x(), self.normal_y());
 
             let hypotenuse = ((x * x) + (y * y)).sqrt();
             let degrees = (y as f32 / hypotenuse).asin()

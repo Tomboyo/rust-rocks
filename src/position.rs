@@ -16,7 +16,6 @@ pub fn translate(entity: &mut Entity, modx: f32, mody: f32) {
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum HitMask {
-    None,
     Circle {
         radius: f32
     },
