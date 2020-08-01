@@ -4,6 +4,8 @@ use crate::input::Controllers;
 use crate::input::Joystick;
 use crate::input::WhichJoystick;
 use crate::entity::Entity;
+use crate::position::Position;
+use crate::position::Velocity;
 use crate::position::HitMask;
 use crate::render::Sprite;
 
@@ -17,10 +19,8 @@ impl Player {
     pub fn new(x: f32, y: f32) -> Self {
         Self {
             entity: Entity {
-                x,
-                y,
-                dx: 0.0,
-                dy: 0.0,
+                position: Position { x, y },
+                velocity: Velocity { dx: 0.0, dy: 0.0 },
                 orientation: 0.0,
                 sprite: Sprite::Player,
                 hitmask: HitMask::Point,
@@ -50,8 +50,8 @@ impl Player {
     ) {
         match joystick.which_joystick {
             WhichJoystick::Left => {
-                self.entity.dx = joystick.normal_x() * MAX_SPEED;
-                self.entity.dy = joystick.normal_y() * MAX_SPEED;
+                self.entity.velocity.dx = joystick.normal_x() * MAX_SPEED;
+                self.entity.velocity.dy = joystick.normal_y() * MAX_SPEED;
             },
             WhichJoystick::Right => {
                 if let Some(angle) = joystick.angle() {

@@ -1,6 +1,8 @@
 use rand::Rng;
 
 use crate::entity::Entity;
+use crate::position::Position;
+use crate::position::Velocity;
 use crate::position::HitMask;
 use crate::render::Sprite;
 
@@ -28,10 +30,11 @@ pub fn new(
     }
 
     Entity {
-        x,
-        y,
-        dx: rng.gen_range(-MAX_SPEED, MAX_SPEED),
-        dy: rng.gen_range(-MAX_SPEED, MAX_SPEED),
+        position: Position { x, y },
+        velocity: Velocity {
+            dx: rng.gen_range(-MAX_SPEED, MAX_SPEED),
+            dy: rng.gen_range(-MAX_SPEED, MAX_SPEED),
+        },
         orientation: rng.gen_range(0.0, 360.0),
         sprite: Sprite::Asteroid,
         hitmask: HitMask::Circle {

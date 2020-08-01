@@ -83,8 +83,8 @@ fn render_entity(
     let texture = textures.get_texture(&entity.sprite);
     let (width, height) = textures.dimensions(&entity.sprite);
     let rectangle = Rect::new(
-        (entity.x - (width as f32 / 2.0)) as i32,
-        (entity.y - (height as f32 / 2.0)) as i32,
+        (entity.position.x - (width as f32 / 2.0)) as i32,
+        (entity.position.y - (height as f32 / 2.0)) as i32,
         width,
         height);
     canvas.copy_ex(

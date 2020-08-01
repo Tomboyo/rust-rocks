@@ -10,6 +10,9 @@ use crate::entity::Entity;
 use crate::entity::Timeout;
 use crate::player::Player;
 use crate::position;
+use crate::position::IntoCollidable;
+use crate::position::Position;
+use crate::position::Velocity;
 use crate::position::HitMask;
 use crate::render;
 use crate::render::Sprite;
@@ -116,16 +119,16 @@ impl GameRoom {
             &self.player.entity.sprite);
 
         let x = self.player.entity.orientation_rad().cos() * width as f32
-            + self.player.entity.x;
+            + self.player.entity.position.x;
         let y = self.player.entity.orientation_rad().sin() * height as f32
-            + self.player.entity.y;
+            + self.player.entity.position.y;
         let dx = self.player.entity.orientation_rad().cos() * 10.0;
         let dy = self.player.entity.orientation_rad().sin() * 10.0;
 
         self.bullets.push(
             Entity {
-                x, y,
-                dx, dy,
+                position: Position { x, y },
+                velocity: Velocity { dx, dy },
                 orientation: self.player.entity.orientation_deg(),
                 sprite: Sprite::Bullet,
                 hitmask: HitMask::Point,
@@ -142,8 +145,12 @@ impl GameRoom {
         std::iter::once(&mut self.player.entity)
             .chain(self.asteroids.iter_mut())
             .chain(self.bullets.iter_mut())
-            .for_each(|x| position::translate(
-                x, width as f32, height as f32));
+            .for_each(|entity| {
+                entity.position = entity.position.translate(
+                    &entity.velocity,
+                    width as f32,
+                    height as f32);
+            });
     }
 
     fn handle_collisions(&mut self) {
@@ -154,7 +161,8 @@ impl GameRoom {
 
         if self.score.last_death.elapsed().as_secs() > 5
         && self.asteroids.iter()
-            .any(|x| position::is_collision(&self.player.entity, x))
+            .map(IntoCollidable::into_collidable)
+            .any(|x| x.is_collision(&self.player.entity.into_collidable()))
         {
             log::info!(
                 "Hit! You destroyed {} asteroids in {} seconds",
