@@ -6,11 +6,11 @@ use sdl2::event::Event;
 use sdl2::controller::Button;
 
 use crate::asteroid;
+use crate::asteroid::Asteroid;
 use crate::entity::Entity;
 use crate::entity::Timeout;
 use crate::player::Player;
 use crate::position;
-use crate::position::IntoCollidable;
 use crate::position::Position;
 use crate::position::Velocity;
 use crate::position::HitMask;
@@ -22,7 +22,7 @@ use crate::room::RoomTransition;
 
 pub struct GameRoom {
     player: Player,
-    asteroids: Vec<Entity>,
+    asteroids: Vec<Asteroid>,
     bullets: Vec<Entity>,
     spawn_interval: Duration,
     last_spawn: Instant,
@@ -58,7 +58,7 @@ impl GameRoom {
             (height / 2) as f32)
     }
 
-    fn init_asteroids(width: u32, height: u32) -> Vec<Entity> {
+    fn init_asteroids(width: u32, height: u32) -> Vec<Asteroid> {
         (1..5)
             .map(|_| asteroid::new(width, height))
             .collect()
@@ -167,17 +167,21 @@ impl GameRoom {
         self.player.position = self.player.position.translate(
             &self.player.velocity,
             width as f32,
-            height as f32
-        );
+            height as f32);
 
-        self.asteroids.iter_mut()
-            .chain(self.bullets.iter_mut())
-            .for_each(|entity| {
-                entity.position = entity.position.translate(
-                    &entity.velocity,
-                    width as f32,
-                    height as f32);
-            });
+        self.asteroids.iter_mut().for_each(|asteroid| {
+            asteroid.position = asteroid.position.translate(
+                &asteroid.velocity,
+                width as f32,
+                height as f32);
+        });
+        
+        self.bullets.iter_mut().for_each(|entity| {
+            entity.position = entity.position.translate(
+                &entity.velocity,
+                width as f32,
+                height as f32);
+        });
     }
 
     fn handle_collisions(&mut self) {
@@ -188,8 +192,7 @@ impl GameRoom {
 
         if self.score.last_death.elapsed().as_secs() > 5
         && self.asteroids.iter()
-            .map(IntoCollidable::into_collidable)
-            .any(|x| x.is_collision(&self.player.into_collidable()))
+            .any(|x| position::is_collision(&self.player, x))
         {
             log::info!(
                 "Hit! You destroyed {} asteroids in {} seconds",

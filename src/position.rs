@@ -45,34 +45,23 @@ pub enum HitMask {
     Point
 }
 
-pub trait IntoCollidable {
-    fn into_collidable(&self) -> Collidable;
+pub trait Collidable {
+    fn hit_mask(&self) -> &HitMask;
+    fn position(&self) -> &Position;
 }
 
-#[derive(Clone)]
-pub struct Collidable {
-    pub position: Position,
-    pub hitmask: HitMask,
-}
-
-#[cfg(test)]
-impl IntoCollidable for Collidable {
-    fn into_collidable(&self) -> Collidable {
-        self.clone()
-    }
-}
-
-impl Collidable {
-    pub fn is_collision(&self, c: &Collidable) -> bool {
-        match (&self.hitmask, &c.hitmask) {
-            (HitMask::Circle { radius }, HitMask::Point) => {
-                self.position.distance(&c.position) <= *radius
-            },
-            (HitMask::Point, HitMask::Circle {..}) => {
-                c.is_collision(&self)
-            }
-            _ => panic!("Collision between {:?} and {:?} not implemented", self.hitmask, c.hitmask)
+pub fn is_collision(
+    a: &impl Collidable,
+    b: &impl Collidable
+) -> bool {
+    match (a.hit_mask(), b.hit_mask()) {
+        (HitMask::Circle { radius }, HitMask::Point) => {
+            a.position().distance(b.position()) <= *radius
+        },
+        (HitMask::Point, HitMask::Circle {..}) => {
+            is_collision(b, a)
         }
+        _ => panic!("Collision between {:?} and {:?} not implemented", a.hit_mask(), b.hit_mask())
     }
 }
 
@@ -82,8 +71,8 @@ impl Collidable {
 /// 
 /// Entities which collide with other Entities in the _same_ vector are ignored.
 pub fn remove_collisions(
-    a: &mut Vec<impl IntoCollidable>,
-    b: &mut Vec<impl IntoCollidable>
+    a: &mut Vec<impl Collidable>,
+    b: &mut Vec<impl Collidable>
 ) -> (usize, usize) {
     let (collided_a, collided_b) = collisions(a, b);
 
@@ -111,17 +100,15 @@ fn remove_all<T>(
 /// indices of elements from `left_source`, while the second at position 1 holds
 /// indices of elements from `right_source`.
 fn collisions(
-    left_source: &Vec<impl IntoCollidable>,
-    right_source: &Vec<impl IntoCollidable>
+    left_source: &Vec<impl Collidable>,
+    right_source: &Vec<impl Collidable>
 ) -> (HashSet<usize>, HashSet<usize>) {
     let mut left_hits = HashSet::new();
     let mut right_hits = HashSet::new();
 
     for (i, left) in left_source.iter().enumerate() {
-        let left_c = left.into_collidable();
         for (j, right) in right_source.iter().enumerate() {
-            let right_c = right.into_collidable();
-            if left_c.is_collision(&right_c) {
+            if is_collision(left, right) {
                 left_hits.insert(i);
                 right_hits.insert(j);
             }
@@ -135,20 +122,30 @@ fn collisions(
 mod test {
     use super::*;
 
+    struct TestCollidable {
+        position: Position,
+        hit_mask: HitMask,
+    }
+
+    impl Collidable for TestCollidable {
+        fn position(&self) -> &Position { &self.position }
+        fn hit_mask(&self) -> &HitMask { &self.hit_mask }
+    }
+
     const RADIUS: f32 = 30.0;
     const DIAMETER: f32 = 2.0 * RADIUS;
 
-    fn circle(x: f32, y: f32) -> Collidable {
-        Collidable {
+    fn circle(x: f32, y: f32) -> impl Collidable {
+        TestCollidable {
             position: Position { x, y },
-            hitmask: HitMask::Circle { radius: RADIUS }
+            hit_mask: HitMask::Circle { radius: RADIUS }
         }
     }
 
-    fn point(x: f32, y: f32) -> Collidable {
-        Collidable {
+    fn point(x: f32, y: f32) -> impl Collidable {
+        TestCollidable {
             position: Position { x, y },
-            hitmask: HitMask::Point
+            hit_mask: HitMask::Point
         }
     }
 

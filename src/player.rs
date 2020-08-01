@@ -3,7 +3,6 @@ use sdl2::event::Event;
 use crate::input::Controllers;
 use crate::input::Joystick;
 use crate::input::WhichJoystick;
-use crate::position::IntoCollidable;
 use crate::position::Collidable;
 use crate::position::Position;
 use crate::position::Velocity;
@@ -64,11 +63,12 @@ impl Player {
     }
 }
 
-impl IntoCollidable for Player {
-    fn into_collidable(&self) -> Collidable {
-        Collidable {
-            position: self.position.clone(),
-            hitmask: self.hitmask.clone(),
-        }
+impl Collidable for Player {
+    fn hit_mask(&self) -> &HitMask {
+        &self.hitmask
+    }
+    
+    fn position(&self) -> &Position {
+        &self.position
     }
 }

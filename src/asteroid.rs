@@ -1,6 +1,6 @@
 use rand::Rng;
 
-use crate::entity::Entity;
+use crate::position::Collidable;
 use crate::position::Position;
 use crate::position::Velocity;
 use crate::position::HitMask;
@@ -8,10 +8,18 @@ use crate::render::Sprite;
 
 static MAX_SPEED: f32 = 7.0;
 
+pub struct Asteroid {
+    pub position: Position,
+    pub velocity: Velocity,
+    pub orientation: f32, // in degrees
+    pub sprite: Sprite,
+    pub hitmask: HitMask,
+}
+
 pub fn new(
     width: u32,
     height: u32,
-) -> Entity {
+) -> Asteroid {
     let mut rng = rand::thread_rng();
 
     // Choose (x, y) on the boundaries of the canvas
@@ -29,7 +37,7 @@ pub fn new(
         }
     }
 
-    Entity {
+    Asteroid {
         position: Position { x, y },
         velocity: Velocity {
             dx: rng.gen_range(-MAX_SPEED, MAX_SPEED),
@@ -39,7 +47,16 @@ pub fn new(
         sprite: Sprite::Asteroid,
         hitmask: HitMask::Circle {
             radius: 32.0
-        },
-        timeouts: Vec::new(),
+        }
+    }
+}
+
+impl Collidable for Asteroid {
+    fn hit_mask(&self) -> &HitMask {
+        &self.hitmask
+    }
+    
+    fn position(&self) -> &Position {
+        &self.position
     }
 }

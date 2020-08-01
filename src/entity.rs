@@ -1,7 +1,6 @@
 use std::time::Instant;
 
 use crate::position::Collidable;
-use crate::position::IntoCollidable;
 use crate::position::Position;
 use crate::position::Velocity;
 use crate::position::HitMask;
@@ -22,11 +21,12 @@ pub enum Timeout {
     Expire { when: Instant },
 }
 
-impl IntoCollidable for Entity {
-    fn into_collidable(&self) -> Collidable {
-        Collidable {
-            position: self.position.clone(),
-            hitmask: self.hitmask.clone(),
-        }
+impl Collidable for Entity {
+    fn hit_mask(&self) -> &HitMask {
+        &self.hitmask
+    }
+    
+    fn position(&self) -> &Position {
+        &self.position
     }
 }
