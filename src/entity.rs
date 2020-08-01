@@ -22,17 +22,6 @@ pub enum Timeout {
     Expire { when: Instant },
 }
 
-// orientatin is in degrees
-impl Entity {
-    pub fn orientation_rad(&self) -> f32 {
-        self.orientation * std::f32::consts::PI / 180.0
-    }
-
-    pub fn orientation_deg(&self) -> f32 {
-        self.orientation
-    }
-}
-
 impl IntoCollidable for Entity {
     fn into_collidable(&self) -> Collidable {
         Collidable {

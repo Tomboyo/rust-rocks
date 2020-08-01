@@ -93,12 +93,32 @@ impl Room for GameRoom {
         &self,
         context: &mut Context,
     ) {
+        context.canvas.clear();
+
         render::render(
-            context.canvas,
-            context.textures,
-            std::iter::once(&self.player.entity)
-                .chain(self.asteroids.iter())
-                .chain(self.bullets.iter()));
+                context.canvas,
+                &self.player.position,
+                self.player.orientation,
+                context.textures.get_texture(&self.player.sprite))
+            .expect("failed to render player");
+        self.asteroids.iter().for_each(|asteroid| {
+            render::render(
+                    context.canvas,
+                    &asteroid.position,
+                    asteroid.orientation,
+                    context.textures.get_texture(&asteroid.sprite))
+                .expect("failed to render asteroid");
+        });
+        self.bullets.iter().for_each(|bullet| {
+            render::render(
+                context.canvas,
+                &bullet.position,
+                bullet.orientation,
+                context.textures.get_texture(&bullet.sprite))
+            .expect("failed to render bullet");
+        });
+        
+        context.canvas.present();
     }
 }
 
@@ -116,20 +136,21 @@ impl GameRoom {
         context: &mut Context,
     ) {
         let (width, height) = context.textures.dimensions(
-            &self.player.entity.sprite);
+            &self.player.sprite);
 
-        let x = self.player.entity.orientation_rad().cos() * width as f32
-            + self.player.entity.position.x;
-        let y = self.player.entity.orientation_rad().sin() * height as f32
-            + self.player.entity.position.y;
-        let dx = self.player.entity.orientation_rad().cos() * 10.0;
-        let dy = self.player.entity.orientation_rad().sin() * 10.0;
+        let orientation = self.player.orientation.to_radians();
+        let x = orientation.cos() * width as f32
+            + self.player.position.x;
+        let y = orientation.sin() * height as f32
+            + self.player.position.y;
+        let dx = orientation.cos() * 10.0;
+        let dy = orientation.sin() * 10.0;
 
         self.bullets.push(
             Entity {
                 position: Position { x, y },
                 velocity: Velocity { dx, dy },
-                orientation: self.player.entity.orientation_deg(),
+                orientation: self.player.orientation,
                 sprite: Sprite::Bullet,
                 hitmask: HitMask::Point,
                 timeouts: vec![
@@ -142,8 +163,14 @@ impl GameRoom {
 
     fn move_entities(&mut self, context: &Context) {
         let (width, height) = context.canvas.window().size();
-        std::iter::once(&mut self.player.entity)
-            .chain(self.asteroids.iter_mut())
+
+        self.player.position = self.player.position.translate(
+            &self.player.velocity,
+            width as f32,
+            height as f32
+        );
+
+        self.asteroids.iter_mut()
             .chain(self.bullets.iter_mut())
             .for_each(|entity| {
                 entity.position = entity.position.translate(
@@ -162,7 +189,7 @@ impl GameRoom {
         if self.score.last_death.elapsed().as_secs() > 5
         && self.asteroids.iter()
             .map(IntoCollidable::into_collidable)
-            .any(|x| x.is_collision(&self.player.entity.into_collidable()))
+            .any(|x| x.is_collision(&self.player.into_collidable()))
         {
             log::info!(
                 "Hit! You destroyed {} asteroids in {} seconds",

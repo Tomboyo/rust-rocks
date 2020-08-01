@@ -1,7 +1,6 @@
 use std::path::Path;
 
 use sdl2::image::LoadTexture;
-use sdl2::pixels::Color;
 use sdl2::rect::Rect;
 use sdl2::render::Canvas;
 use sdl2::render::Texture;
@@ -9,7 +8,7 @@ use sdl2::render::TextureCreator;
 use sdl2::video::Window;
 use sdl2::video::WindowContext;
 
-use crate::entity::Entity;
+use crate::position::Position;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Sprite {
@@ -45,7 +44,7 @@ impl <'a> Textures<'a> {
         (query.width, query.height)
     }
 
-    fn get_texture(
+    pub fn get_texture(
         &self,
         sprite: &Sprite
     ) -> &Texture {
@@ -57,42 +56,24 @@ impl <'a> Textures<'a> {
     }
 }
 
-pub fn render<'a, T>(
+pub fn render(
     canvas: &mut Canvas<Window>,
-    textures: &Textures,
-    entities: T
-) where
-    T: IntoIterator<Item=&'a Entity>,
-{
-    canvas.set_draw_color(Color::BLACK);
-    canvas.clear();
-
-    for entity in entities {
-        render_entity(canvas, textures, entity)
-            .expect("Failed to render entity");
-    };
-
-    canvas.present();
-}
-
-fn render_entity(
-    canvas: &mut Canvas<Window>,
-    textures: &Textures,
-    entity: &Entity,
+    position: &Position,
+    orientation: f32,
+    texture: &Texture,
 ) -> Result<(), String> {
-    let texture = textures.get_texture(&entity.sprite);
-    let (width, height) = textures.dimensions(&entity.sprite);
-    let rectangle = Rect::new(
-        (entity.position.x - (width as f32 / 2.0)) as i32,
-        (entity.position.y - (height as f32 / 2.0)) as i32,
-        width,
-        height);
+    let query = texture.query();
+    let destination = Rect::new(
+        (position.x - (query.width as f32 / 2.0)) as i32,
+        (position.y - (query.height as f32 / 2.0)) as i32,
+        query.width,
+        query.height);
     canvas.copy_ex(
         &texture,
         None,
-        rectangle,
-        entity.orientation as f64,
-        None, // rotate around center of `rectangle`
+        destination,
+        orientation as f64,
+        None, // rotate around center of `destination`
         false,
         false)
 }

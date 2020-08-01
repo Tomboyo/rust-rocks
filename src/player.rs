@@ -3,7 +3,8 @@ use sdl2::event::Event;
 use crate::input::Controllers;
 use crate::input::Joystick;
 use crate::input::WhichJoystick;
-use crate::entity::Entity;
+use crate::position::IntoCollidable;
+use crate::position::Collidable;
 use crate::position::Position;
 use crate::position::Velocity;
 use crate::position::HitMask;
@@ -12,20 +13,21 @@ use crate::render::Sprite;
 static MAX_SPEED: f32 = 5.0;
 
 pub struct Player {
-    pub entity: Entity,
+    pub position: Position,
+    pub velocity: Velocity,
+    pub orientation: f32, // in degrees
+    pub sprite: Sprite,
+    pub hitmask: HitMask,
 }
 
 impl Player {
     pub fn new(x: f32, y: f32) -> Self {
         Self {
-            entity: Entity {
-                position: Position { x, y },
-                velocity: Velocity { dx: 0.0, dy: 0.0 },
-                orientation: 0.0,
-                sprite: Sprite::Player,
-                hitmask: HitMask::Point,
-                timeouts: Vec::new(),
-            }
+            position: Position { x, y },
+            velocity: Velocity { dx: 0.0, dy: 0.0 },
+            orientation: 0.0,
+            sprite: Sprite::Player,
+            hitmask: HitMask::Point,
         }
     }
 
@@ -50,14 +52,23 @@ impl Player {
     ) {
         match joystick.which_joystick {
             WhichJoystick::Left => {
-                self.entity.velocity.dx = joystick.normal_x() * MAX_SPEED;
-                self.entity.velocity.dy = joystick.normal_y() * MAX_SPEED;
+                self.velocity.dx = joystick.normal_x() * MAX_SPEED;
+                self.velocity.dy = joystick.normal_y() * MAX_SPEED;
             },
             WhichJoystick::Right => {
                 if let Some(angle) = joystick.angle() {
-                    self.entity.orientation = angle;
+                    self.orientation = angle;
                 }
             }
         };
+    }
+}
+
+impl IntoCollidable for Player {
+    fn into_collidable(&self) -> Collidable {
+        Collidable {
+            position: self.position.clone(),
+            hitmask: self.hitmask.clone(),
+        }
     }
 }
