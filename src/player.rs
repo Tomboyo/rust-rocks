@@ -7,6 +7,7 @@ use crate::position::Collidable;
 use crate::position::Position;
 use crate::position::Velocity;
 use crate::position::HitMask;
+use crate::render::Renderable;
 use crate::render::Sprite;
 
 static MAX_SPEED: f32 = 5.0;
@@ -70,5 +71,19 @@ impl Collidable for Player {
     
     fn position(&self) -> &Position {
         &self.position
+    }
+}
+
+impl <'a> Renderable<'a> for Player {
+    fn position(&'a self) -> &'a Position {
+        &self.position
+    }
+
+    fn orientation(&self) -> f64 {
+        self.orientation as f64
+    }
+
+    fn sprite(&'a self) -> &'a Sprite {
+        &self.sprite
     }
 }

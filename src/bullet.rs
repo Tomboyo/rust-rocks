@@ -4,6 +4,7 @@ use crate::position::Collidable;
 use crate::position::Position;
 use crate::position::HitMask;
 use crate::position::Velocity;
+use crate::render::Renderable;
 use crate::render::Sprite;
 
 pub struct Bullet {
@@ -27,5 +28,19 @@ impl Collidable for Bullet {
     
     fn position(&self) -> &Position {
         &self.position
+    }
+}
+
+impl <'a> Renderable<'a> for Bullet {
+    fn position(&'a self) -> &'a Position {
+        &self.position
+    }
+
+    fn orientation(&self) -> f64 {
+        self.orientation as f64
+    }
+
+    fn sprite(&'a self) -> &'a Sprite {
+        &self.sprite
     }
 }

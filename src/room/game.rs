@@ -95,28 +95,15 @@ impl Room for GameRoom {
     ) {
         context.canvas.clear();
 
-        render::render(
-                context.canvas,
-                &self.player.position,
-                self.player.orientation,
-                context.textures.get_texture(&self.player.sprite))
-            .expect("failed to render player");
-        self.asteroids.iter().for_each(|asteroid| {
-            render::render(
+        std::iter::once(&self.player as &dyn render::Renderable)
+            .chain(self.asteroids.iter().map(|x| x as &dyn render::Renderable))
+            .chain(self.bullets.iter().map(|x| x as &dyn render::Renderable))
+            .for_each(|x|
+                render::render(
                     context.canvas,
-                    &asteroid.position,
-                    asteroid.orientation,
-                    context.textures.get_texture(&asteroid.sprite))
-                .expect("failed to render asteroid");
-        });
-        self.bullets.iter().for_each(|bullet| {
-            render::render(
-                context.canvas,
-                &bullet.position,
-                bullet.orientation,
-                context.textures.get_texture(&bullet.sprite))
-            .expect("failed to render bullet");
-        });
+                    context.textures,
+                    x)
+                .expect("failed to render bullet"));
         
         context.canvas.present();
     }
