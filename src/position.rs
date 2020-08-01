@@ -122,6 +122,7 @@ fn collisions(
 mod test {
     use super::*;
 
+    #[derive(Debug, PartialEq)]
     struct TestCollidable {
         position: Position,
         hit_mask: HitMask,
@@ -135,14 +136,14 @@ mod test {
     const RADIUS: f32 = 30.0;
     const DIAMETER: f32 = 2.0 * RADIUS;
 
-    fn circle(x: f32, y: f32) -> impl Collidable {
+    fn circle(x: f32, y: f32) -> TestCollidable {
         TestCollidable {
             position: Position { x, y },
             hit_mask: HitMask::Circle { radius: RADIUS }
         }
     }
 
-    fn point(x: f32, y: f32) -> impl Collidable {
+    fn point(x: f32, y: f32) -> TestCollidable {
         TestCollidable {
             position: Position { x, y },
             hit_mask: HitMask::Point

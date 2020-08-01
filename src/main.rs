@@ -1,5 +1,5 @@
 mod asteroid;
-mod entity;
+mod bullet;
 mod input;
 mod player;
 mod position;

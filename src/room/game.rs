@@ -7,8 +7,8 @@ use sdl2::controller::Button;
 
 use crate::asteroid;
 use crate::asteroid::Asteroid;
-use crate::entity::Entity;
-use crate::entity::Timeout;
+use crate::bullet::Bullet;
+use crate::bullet::Timeout;
 use crate::player::Player;
 use crate::position;
 use crate::position::Position;
@@ -23,7 +23,7 @@ use crate::room::RoomTransition;
 pub struct GameRoom {
     player: Player,
     asteroids: Vec<Asteroid>,
-    bullets: Vec<Entity>,
+    bullets: Vec<Bullet>,
     spawn_interval: Duration,
     last_spawn: Instant,
     score: Score,
@@ -147,17 +147,15 @@ impl GameRoom {
         let dy = orientation.sin() * 10.0;
 
         self.bullets.push(
-            Entity {
+            Bullet {
                 position: Position { x, y },
                 velocity: Velocity { dx, dy },
                 orientation: self.player.orientation,
                 sprite: Sprite::Bullet,
                 hitmask: HitMask::Point,
-                timeouts: vec![
-                    Timeout::Expire {
-                        when: Instant::now().add(Duration::from_secs(3)),
-                    }
-                ],
+                timeout: Timeout::Expire {
+                    when: Instant::now().add(Duration::from_secs(3)),
+                }
             });
     }
 
@@ -206,15 +204,12 @@ impl GameRoom {
     }
 
     fn handle_timeouts(&mut self) {
-        self.bullets.retain(|x| {
-            x.timeouts.iter().all(|t| {
-                match t {
-                    Timeout::Expire { when } => {
-                        Instant::now() < *when
-                    }
+        self.bullets.retain(|x|
+            match x.timeout {
+                Timeout::Expire { when } => {
+                    Instant::now() < when
                 }
-            })
-        });
+            });
     }
 
     fn spawn_asteroids(&mut self, now: Instant, context: &Context) {
