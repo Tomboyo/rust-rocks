@@ -6,9 +6,7 @@ This is a for-fun Asteroids-like game implemented in Rust using SDL2 bindings.
 
 At time of writing, this game responds to xbox-like gamepad controls only (specifically anything supported by SDL2's game controller subsystem). I use a Logitech F710 for testing.
 
-At the title screen, press `Right Bumper` to start the game.
-
-Use the `Left Joystick` to move, the `Right Joystick` to aim, and the `Right Bumper` to shoot.
+Use the D-Pad to navigtate menu options. Use the `Left Joystick` to move, the `Right Joystick` to aim, and the `Right Bumper` to shoot.
 
 == Compatibility
 
@@ -22,8 +20,10 @@ Otherwise, simply invoke `cargo build` to compile.
 
 == Run
 
-Invoke `cargo run` from the root directory. The executable tries to load sprites from `./resources`, so the working directory is significant.
+Invoke `cargo run` from the root directory. The executable tries to load sprites and fonts from `./resources`, so the working directory is significant.
 
 == Acknowledgements
 
-The player ship sprite this project originally used is "speedship" by MillionthVector (https://millionthvector.blogspot.com/p/free-sprites.html[source]), distributed under https://creativecommons.org/licenses/by/4.0/[creative-commons 4.0]. The current all-white sprite is a modified, monochromatic version of speedship.
+The player ship sprite used by earlier versions of Rust Rocks is the "speedship" sprite created by MillionthVector (https://millionthvector.blogspot.com/p/free-sprites.html[source]) and distributed under https://creativecommons.org/licenses/by/4.0/[creative-commons 4.0]. The current version of Rust Rocks uses a sprite derived from speedship.
+
+Rust Rocks uses the "Press Start 2P" font by Cody "CodeMan38" Boisclair (cody@zone38.net), distributed under the SIL Open Font License, Version 1.1. A copy of the license may be found next to the font file at resources/press-start-2p/LICENSE.txt.

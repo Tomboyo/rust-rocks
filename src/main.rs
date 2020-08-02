@@ -24,6 +24,9 @@ fn main() {
     let gcs = context.game_controller().expect("Failed to init game controller subsystem");
     let mut pump = context.event_pump().expect("Failed to init the event pump");
     let video_subsystem = context.video().expect("Failed to init video subsystem");
+    let ttf = sdl2::ttf::init().expect("Failed to init TTF subsystem");
+    let font = ttf.load_font("resources/press-start-2p/font.ttf", 18)
+        .expect("Failed to load press-start-2p font");
     let window = video_subsystem
         .window("Rust Rocks", 800, 600)
         .position_centered()
@@ -43,7 +46,7 @@ fn main() {
         controllers: &controllers,
     };
 
-    let mut room: Box<dyn Room> = Box::new(TitleRoom::new(&mut room_context));
+    let mut room: Box<dyn Room> = Box::new(TitleRoom::new(&font, &texture_creator));
 
     loop {
         let events: Vec<Event> = pump.poll_iter().collect();
@@ -55,7 +58,8 @@ fn main() {
             match transition {
                 RoomTransition::Game => {
                     room = Box::new(GameRoom::new(&mut room_context));
-                }
+                },
+                RoomTransition::Quit => break
             }
         } else {
             room.render(&mut room_context);

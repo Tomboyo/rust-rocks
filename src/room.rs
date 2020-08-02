@@ -10,8 +10,10 @@ use sdl2::video::Window;
 use crate::input::ControllersMap;
 use crate::render::Textures;
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum RoomTransition {
     Game,
+    Quit,
 }
 
 pub struct Context<'a> {
