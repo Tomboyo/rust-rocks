@@ -55,11 +55,7 @@ impl <'t> TitleRoom<'t> {
     ) -> Self {
         TitleRoom {
             menu: Menu::new(
-                LogicalMenu::new(
-                    vec![
-                        RoomTransition::Game,
-                        RoomTransition::Quit,
-                    ]),
+                LogicalMenu::new(),
                 font,
                 texture_creator),
         }
@@ -101,15 +97,12 @@ struct Menu<'t> {
 }
 
 impl LogicalMenu {
-    pub fn new(
-        choices: Vec<RoomTransition>
-    ) -> Self {
-        if choices.len() < 1 {
-            panic!("At least one choice is required");
-        }
-
+    pub fn new() -> Self {
         Self {
-            choices,
+            choices: vec![
+                RoomTransition::Game,
+                RoomTransition::Quit
+            ],
             cursor_index: 0,
         }
     }
@@ -143,6 +136,7 @@ impl <'t> Menu<'t> {
             logical.choices.iter().map(|x| match x {
                 RoomTransition::Game => "> Start",
                 RoomTransition::Quit => "> Exit",
+                _ => panic!("Unexpected choice {:?}", x),
             })
             .map(|x| Self::create_texture(x, font, texture_creator))
             .collect();
@@ -151,6 +145,7 @@ impl <'t> Menu<'t> {
             logical.choices.iter().map(|x| match x {
                 RoomTransition::Game => "  Start",
                 RoomTransition::Quit => "  Exit",
+                _ => panic!("Unexpected choice {:?}", x),
             })
             .map(|x| Self::create_texture(x, font, texture_creator))
             .collect();
@@ -217,10 +212,7 @@ mod test {
 
     #[test]
     fn test_menu_navigation() {
-        let mut menu = LogicalMenu::new(vec![
-            RoomTransition::Game,
-            RoomTransition::Quit
-        ]);
+        let mut menu = LogicalMenu::new();
 
         assert_eq!(
             RoomTransition::Game,

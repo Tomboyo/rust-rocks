@@ -26,12 +26,7 @@ pub struct GameRoom {
     bullets: Vec<Bullet>,
     spawn_interval: Duration,
     last_spawn: Instant,
-    score: Score,
-}
-
-struct Score {
-    pub asteroids_destroyed: u16,
-    pub last_death: Instant,
+    score: u16,
 }
 
 impl GameRoom {
@@ -45,10 +40,7 @@ impl GameRoom {
             bullets: Vec::new(),
             spawn_interval: Duration::from_secs(1),
             last_spawn: Instant::now(),
-            score: Score {
-                asteroids_destroyed: 0,
-                last_death: Instant::now(),
-            }
+            score: 0,
         }
     }
 
@@ -82,7 +74,10 @@ impl Room for GameRoom {
         }
 
         self.move_entities(context);
-        self.handle_collisions();
+        let tx = self.handle_collisions();
+        if tx.is_some() {
+            return tx; // player was hit
+        }
         self.handle_timeouts();
         self.spawn_asteroids(now, context);
 
@@ -169,24 +164,17 @@ impl GameRoom {
         });
     }
 
-    fn handle_collisions(&mut self) {
+    fn handle_collisions(&mut self) -> Option<RoomTransition> {
         let (_, hits) = position::remove_collisions(
             &mut self.bullets,
             &mut self.asteroids);
-        self.score.asteroids_destroyed += hits as u16;
+        self.score += hits as u16;
 
-        if self.score.last_death.elapsed().as_secs() > 5
-        && self.asteroids.iter()
-            .any(|x| position::is_collision(&self.player, x))
-        {
-            log::info!(
-                "Hit! You destroyed {} asteroids in {} seconds",
-                self.score.asteroids_destroyed,
-                self.score.last_death.elapsed().as_secs());
-            self.score = Score {
-                asteroids_destroyed: 0,
-                last_death: Instant::now()
-            }
+        if self.asteroids.iter()
+                .any(|x| position::is_collision(&self.player, x)) {
+            Some(RoomTransition::Score { score: self.score })
+        } else {
+            None
         }
     }
 

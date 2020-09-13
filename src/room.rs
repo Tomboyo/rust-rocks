@@ -1,5 +1,6 @@
 pub mod game;
 pub mod title;
+pub mod score;
 
 use std::time::Instant;
 
@@ -14,6 +15,8 @@ use crate::render::Textures;
 pub enum RoomTransition {
     Game,
     Quit,
+    Title,
+    Score { score: u16 },
 }
 
 pub struct Context<'a> {

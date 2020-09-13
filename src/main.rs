@@ -5,6 +5,7 @@ mod player;
 mod position;
 mod render;
 mod room;
+mod scores;
 
 use std::time::Instant;
 
@@ -15,7 +16,9 @@ use crate::room::Context;
 use crate::room::Room;
 use crate::room::RoomTransition;
 use crate::room::game::GameRoom;
+use crate::room::score::ScoreRoom;
 use crate::room::title::TitleRoom;
+use crate::scores::Scores;
 
 fn main() {
     env_logger::init();
@@ -46,6 +49,7 @@ fn main() {
         controllers: &controllers,
     };
 
+    let mut scores = Scores::init();
     let mut room: Box<dyn Room> = Box::new(TitleRoom::new(&font, &texture_creator));
 
     loop {
@@ -58,6 +62,17 @@ fn main() {
             match transition {
                 RoomTransition::Game => {
                     room = Box::new(GameRoom::new(&mut room_context));
+                },
+                RoomTransition::Title => {
+                    room = Box::new(TitleRoom::new(&font, &texture_creator))
+                },
+                RoomTransition::Score { score } => {
+                    scores.new_score(score);
+                    room = Box::new(ScoreRoom::new(
+                        scores.clone(),
+                        &font,
+                        &texture_creator
+                    ))
                 },
                 RoomTransition::Quit => break
             }
