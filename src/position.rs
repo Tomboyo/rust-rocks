@@ -1,3 +1,7 @@
+mod dynamic_position;
+
+pub use crate::position::dynamic_position::DynamicPosition;
+
 use std::collections::HashSet;
 
 #[derive(Clone, Debug, PartialEq)]
@@ -13,25 +17,24 @@ pub struct Velocity {
 }
 
 impl Position {
-    pub fn translate(
-        &mut self,
-        v: &Velocity,
-        modx: f32,
-        mody: f32
-    ) -> Self {
-        let mut x = (self.x + v.dx) % modx;
-        if x.is_sign_negative() {
-            x = x + modx;
-        }
-
-        let mut y = (self.y + v.dy) % mody;
-        if y.is_sign_negative() {
-            y = y + mody;
-        }
-
-        Position { x, y }
+    /// Apply the given velocity to the current position, translating it. Return
+    /// the updated position for chaining.
+    pub fn translate(&mut self, v: &Velocity) -> &mut Self {
+        self.x += v.dx;
+        self.y += v.dy;
+        self
     }
 
+    /// Apply the given bounds to the current position such that
+    /// `0 <= x < modx` and `0 <= y < mody`. Return the updated permission for
+    /// chaining.
+    pub fn modulate(&mut self, modx: f32, mody: f32) -> &mut Self {
+        self.x = (self.x + modx) % modx;
+        self.y = (self.y + mody) % mody;
+        self
+    }
+
+    /// Calculate the distance from this position to the given position.
     pub fn distance(&self, p: &Self) -> f32 {
         ((self.x - p.x).powf(2.0) + (self.y - p.y).powf(2.0)).sqrt()
     }
@@ -39,10 +42,8 @@ impl Position {
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum HitMask {
-    Circle {
-        radius: f32
-    },
-    Point
+    Circle { radius: f32 },
+    Point,
 }
 
 pub trait Collidable {
@@ -50,29 +51,28 @@ pub trait Collidable {
     fn position(&self) -> &Position;
 }
 
-pub fn is_collision(
-    a: &impl Collidable,
-    b: &impl Collidable
-) -> bool {
+pub fn is_collision(a: &impl Collidable, b: &impl Collidable) -> bool {
     match (a.hit_mask(), b.hit_mask()) {
         (HitMask::Circle { radius }, HitMask::Point) => {
             a.position().distance(b.position()) <= *radius
-        },
-        (HitMask::Point, HitMask::Circle {..}) => {
-            is_collision(b, a)
         }
-        _ => panic!("Collision between {:?} and {:?} not implemented", a.hit_mask(), b.hit_mask())
+        (HitMask::Point, HitMask::Circle { .. }) => is_collision(b, a),
+        _ => panic!(
+            "Collision between {:?} and {:?} not implemented",
+            a.hit_mask(),
+            b.hit_mask()
+        ),
     }
 }
 
 /// For each vector, remove all Entities from it which collide with Entities
 /// from the other Vector. Returns the number of entities removed from each
 /// vector.
-/// 
+///
 /// Entities which collide with other Entities in the _same_ vector are ignored.
 pub fn remove_collisions(
     a: &mut Vec<impl Collidable>,
-    b: &mut Vec<impl Collidable>
+    b: &mut Vec<impl Collidable>,
 ) -> (usize, usize) {
     let (collided_a, collided_b) = collisions(a, b);
 
@@ -82,10 +82,7 @@ pub fn remove_collisions(
     (collided_a.len(), collided_b.len())
 }
 
-fn remove_all<T>(
-    from: &mut Vec<T>,
-    indices: &HashSet<usize>
-) {
+fn remove_all<T>(from: &mut Vec<T>, indices: &HashSet<usize>) {
     let mut i: usize = 0;
     from.retain(|_| {
         let r = !indices.contains(&i);
@@ -95,13 +92,13 @@ fn remove_all<T>(
 }
 
 /// Identifies colliding entities by their indices.
-/// 
+///
 /// The resulting tuple contains two vectors. The first at position 0 holds
 /// indices of elements from `left_source`, while the second at position 1 holds
 /// indices of elements from `right_source`.
 fn collisions(
     left_source: &Vec<impl Collidable>,
-    right_source: &Vec<impl Collidable>
+    right_source: &Vec<impl Collidable>,
 ) -> (HashSet<usize>, HashSet<usize>) {
     let mut left_hits = HashSet::new();
     let mut right_hits = HashSet::new();
@@ -129,8 +126,12 @@ mod test {
     }
 
     impl Collidable for TestCollidable {
-        fn position(&self) -> &Position { &self.position }
-        fn hit_mask(&self) -> &HitMask { &self.hit_mask }
+        fn position(&self) -> &Position {
+            &self.position
+        }
+        fn hit_mask(&self) -> &HitMask {
+            &self.hit_mask
+        }
     }
 
     const RADIUS: f32 = 30.0;
@@ -139,14 +140,14 @@ mod test {
     fn circle(x: f32, y: f32) -> TestCollidable {
         TestCollidable {
             position: Position { x, y },
-            hit_mask: HitMask::Circle { radius: RADIUS }
+            hit_mask: HitMask::Circle { radius: RADIUS },
         }
     }
 
     fn point(x: f32, y: f32) -> TestCollidable {
         TestCollidable {
             position: Position { x, y },
-            hit_mask: HitMask::Point
+            hit_mask: HitMask::Point,
         }
     }
 
@@ -154,7 +155,7 @@ mod test {
     fn test_remove_collisions() {
         let mut circles = vec![
             circle(100.0 - DIAMETER, 100.0 - DIAMETER),
-            circle(100.0,            100.0           ),
+            circle(100.0, 100.0),
             circle(100.0 + DIAMETER, 100.0 + DIAMETER),
         ];
 
@@ -170,27 +171,27 @@ mod test {
         assert_eq!(
             vec![circle(100.0, 100.0)],
             circles,
-            "The two circles colliding with points should have been removed");
+            "The two circles colliding with points should have been removed"
+        );
         assert_eq!(
             true,
             points.is_empty(),
-            "All points collided with circles and should have been removed");
+            "All points collided with circles and should have been removed"
+        );
     }
 
     #[test]
     fn test_remove_collisions_between_circle_and_points() {
         let x = 100.0;
         let y = 100.0;
-        let mut circles = vec![
-            circle(x, y)
-        ];
+        let mut circles = vec![circle(x, y)];
         let mut points = vec![
             // In collision (within or on the edge of the circle)
-            point(x,          y         ),
-            point(x - RADIUS, y         ),
-            point(x + RADIUS, y         ),
-            point(x,          y - RADIUS),
-            point(x,          y + RADIUS),
+            point(x, y),
+            point(x - RADIUS, y),
+            point(x + RADIUS, y),
+            point(x, y - RADIUS),
+            point(x, y + RADIUS),
             // Not in collision (on the corners of a square outside the circle)
             point(x - RADIUS, y - RADIUS),
             point(x - RADIUS, y + RADIUS),
@@ -203,7 +204,8 @@ mod test {
         assert_eq!(
             true,
             circles.is_empty(),
-            "The circle was in collision and should be removed");
+            "The circle was in collision and should be removed"
+        );
         assert_eq!(
             vec![
                 point(x - RADIUS, y - RADIUS),
@@ -212,6 +214,7 @@ mod test {
                 point(x + RADIUS, y + RADIUS),
             ],
             points,
-            "Only four points did not collide and should remain");
+            "Only four points did not collide and should remain"
+        );
     }
 }

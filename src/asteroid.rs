@@ -1,9 +1,9 @@
 use rand::Rng;
 
-use crate::position::Collidable;
+use crate::position::HitMask;
 use crate::position::Position;
 use crate::position::Velocity;
-use crate::position::HitMask;
+use crate::position::{Collidable, DynamicPosition};
 use crate::render::Renderable;
 use crate::render::Sprite;
 
@@ -17,10 +17,7 @@ pub struct Asteroid {
     pub hitmask: HitMask,
 }
 
-pub fn new(
-    width: u32,
-    height: u32,
-) -> Asteroid {
+pub fn new(width: u32, height: u32) -> Asteroid {
     let mut rng = rand::thread_rng();
 
     // Choose (x, y) on the boundaries of the canvas
@@ -46,9 +43,7 @@ pub fn new(
         },
         orientation: rng.gen_range(0.0, 360.0),
         sprite: Sprite::Asteroid,
-        hitmask: HitMask::Circle {
-            radius: 32.0
-        }
+        hitmask: HitMask::Circle { radius: 32.0 },
     }
 }
 
@@ -56,13 +51,13 @@ impl Collidable for Asteroid {
     fn hit_mask(&self) -> &HitMask {
         &self.hitmask
     }
-    
+
     fn position(&self) -> &Position {
         &self.position
     }
 }
 
-impl <'a> Renderable<'a> for Asteroid {
+impl<'a> Renderable<'a> for Asteroid {
     fn position(&'a self) -> &'a Position {
         &self.position
     }
@@ -73,5 +68,15 @@ impl <'a> Renderable<'a> for Asteroid {
 
     fn sprite(&'a self) -> &'a Sprite {
         &self.sprite
+    }
+}
+
+impl DynamicPosition for Asteroid {
+    fn translate(&mut self) {
+        self.position.translate(&self.velocity);
+    }
+
+    fn clamp(&mut self, modx: f32, mody: f32) {
+        self.position.modulate(modx, mody);
     }
 }

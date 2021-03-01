@@ -1,7 +1,7 @@
 pub struct Joystick {
     pub x: i16,
     pub y: i16,
-    pub which_joystick: WhichJoystick
+    pub which_joystick: WhichJoystick,
 }
 
 pub enum WhichJoystick {
@@ -45,17 +45,11 @@ impl Joystick {
             let (x, y) = (self.normal_x(), self.normal_y());
 
             let hypotenuse = ((x * x) + (y * y)).sqrt();
-            let degrees = (y as f32 / hypotenuse).asin()
-                * (180.0 / std::f32::consts::PI);
+            let degrees = (y as f32 / hypotenuse).asin() * (180.0 / std::f32::consts::PI);
             // the y-axis maps -1.0 to -90, 0.0 => 0, and 1.0 => 90. This is the
             // correct angle when x >= 0. When x <= 0, we can subtract that from
             // 180.
-            Some(
-                if x <= 0.0 {
-                    180.0 - degrees
-                } else {
-                    degrees
-                })
+            Some(if x <= 0.0 { 180.0 - degrees } else { degrees })
         }
     }
 }
