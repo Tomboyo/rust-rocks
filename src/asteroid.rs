@@ -38,10 +38,10 @@ pub fn new(width: u32, height: u32) -> Asteroid {
     Asteroid {
         position: Position { x, y },
         velocity: Velocity {
-            dx: rng.gen_range(-MAX_SPEED, MAX_SPEED),
-            dy: rng.gen_range(-MAX_SPEED, MAX_SPEED),
+            dx: rng.gen_range(-MAX_SPEED..=MAX_SPEED),
+            dy: rng.gen_range(-MAX_SPEED..=MAX_SPEED),
         },
-        orientation: rng.gen_range(0.0, 360.0),
+        orientation: rng.gen_range(0.0..360.0),
         sprite: Sprite::Asteroid,
         hitmask: HitMask::Circle { radius: 32.0 },
     }
