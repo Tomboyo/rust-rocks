@@ -31,3 +31,6 @@ pub enum SpriteKind {
     Player,
     Title,
 }
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct PlayerInput;

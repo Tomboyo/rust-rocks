@@ -1,8 +1,17 @@
-use crate::component::{HitMask, Orientation, Position, Sprite, SpriteKind, Velocity};
+use crate::component::{HitMask, Orientation, PlayerInput, Position, Sprite, SpriteKind, Velocity};
 
 // const MAX_SPEED: f32 = 5.0;
 
-pub fn new(bounds: (f32, f32)) -> (Position, Velocity, Orientation, Sprite, HitMask) {
+pub fn new(
+    bounds: (f32, f32),
+) -> (
+    Position,
+    Velocity,
+    Orientation,
+    Sprite,
+    HitMask,
+    PlayerInput,
+) {
     let (x, y) = bounds;
 
     (
@@ -16,6 +25,7 @@ pub fn new(bounds: (f32, f32)) -> (Position, Velocity, Orientation, Sprite, HitM
             kind: SpriteKind::Player,
         },
         HitMask::Point,
+        PlayerInput,
     )
 }
 

@@ -12,6 +12,7 @@ use entity::{asteroid, player};
 use legion::{Resources, Schedule, World};
 use resource::{controllers::Controllers, input_events::InputEvents, textures::Textures};
 use sdl2::{event::Event, render::Canvas, video::Window, EventPump};
+use system::player_input::PlayerInputState;
 
 fn main() {
     env_logger::init();
@@ -31,6 +32,9 @@ fn main() {
 
     let mut schedule = Schedule::builder()
         .add_thread_local(system::render::render_system())
+        .add_system(system::player_input::player_input_system(
+            PlayerInputState::default(),
+        ))
         .build();
 
     let min = Duration::from_millis(16);
