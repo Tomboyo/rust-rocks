@@ -18,6 +18,10 @@ impl<'a> Textures {
             SpriteKind::Asteroid,
             Self::load_texture(texture_creator, "asteroid.bmp"),
         );
+        textures.insert(
+            SpriteKind::Player,
+            Self::load_texture(texture_creator, "player-ship.bmp"),
+        );
         Self { textures }
     }
 

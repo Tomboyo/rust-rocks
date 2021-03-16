@@ -8,21 +8,24 @@ use std::{
     time::{Duration, Instant},
 };
 
-use entity::asteroid;
+use entity::{asteroid, player};
 use legion::{Resources, Schedule, World};
-use resource::textures::Textures;
-use sdl2::{render::Canvas, video::Window};
+use resource::{input_events::InputEvents, textures::Textures};
+use sdl2::{event::Event, render::Canvas, video::Window, EventPump};
 
 fn main() {
     env_logger::init();
 
+    let bounds = (800.0, 600.0);
     let mut world = World::default();
-    world.push(asteroid::new((800.0, 600.0)));
+    world.push(asteroid::new(bounds));
+    world.push(player::new(bounds));
 
+    let (canvas, textures, mut event_pump) = create_context().unwrap();
     let mut resources = Resources::default();
-    let (canvas, textures) = create_context().unwrap();
     resources.insert(canvas);
     resources.insert(textures);
+    resources.insert(InputEvents::new(Vec::new()));
 
     let mut schedule = Schedule::builder()
         .add_thread_local(system::render::render_system())
@@ -31,6 +34,14 @@ fn main() {
     let min = Duration::from_millis(16);
     loop {
         let start = Instant::now();
+
+        let events: Vec<Event> = event_pump.poll_iter().collect();
+        if events.iter().any(|x| matches!(x, Event::Quit { .. })) {
+            break;
+        }
+
+        resources.remove::<InputEvents>();
+        resources.insert(InputEvents::new(events));
 
         schedule.execute(&mut world, &mut resources);
 
@@ -41,8 +52,9 @@ fn main() {
     }
 }
 
-fn create_context() -> Result<(Canvas<Window>, Textures), Box<dyn Error>> {
+fn create_context() -> Result<(Canvas<Window>, Textures, EventPump), Box<dyn Error>> {
     let context = sdl2::init()?;
+    let event_pump = context.event_pump()?;
     let video = context.video()?;
     let window = video
         .window("Rust Rocks", 800, 600)
@@ -51,7 +63,7 @@ fn create_context() -> Result<(Canvas<Window>, Textures), Box<dyn Error>> {
     let canvas = window.into_canvas().build()?;
     let texture_creator = canvas.texture_creator();
     let textures = Textures::new(&texture_creator);
-    Ok((canvas, textures))
+    Ok((canvas, textures, event_pump))
 }
 
 // fn legacy_main() {
