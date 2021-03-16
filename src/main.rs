@@ -10,7 +10,7 @@ use std::{
 
 use entity::{asteroid, player};
 use legion::{Resources, Schedule, World};
-use resource::{input_events::InputEvents, textures::Textures};
+use resource::{controllers::Controllers, input_events::InputEvents, textures::Textures};
 use sdl2::{event::Event, render::Canvas, video::Window, EventPump};
 
 fn main() {
@@ -21,7 +21,9 @@ fn main() {
     world.push(asteroid::new(bounds));
     world.push(player::new(bounds));
 
-    let (canvas, textures, mut event_pump) = create_context().unwrap();
+    // game controllers self-close when droppedd; the unused "controllers" holds
+    // them open until we are done.
+    let (canvas, textures, mut event_pump, _controllers) = create_context().unwrap();
     let mut resources = Resources::default();
     resources.insert(canvas);
     resources.insert(textures);
@@ -52,9 +54,11 @@ fn main() {
     }
 }
 
-fn create_context() -> Result<(Canvas<Window>, Textures, EventPump), Box<dyn Error>> {
+fn create_context() -> Result<(Canvas<Window>, Textures, EventPump, Controllers), Box<dyn Error>> {
     let context = sdl2::init()?;
-    let event_pump = context.event_pump()?;
+    let gcs = context.game_controller()?;
+    let controllers = Controllers::new(&gcs)?;
+
     let video = context.video()?;
     let window = video
         .window("Rust Rocks", 800, 600)
@@ -63,7 +67,10 @@ fn create_context() -> Result<(Canvas<Window>, Textures, EventPump), Box<dyn Err
     let canvas = window.into_canvas().build()?;
     let texture_creator = canvas.texture_creator();
     let textures = Textures::new(&texture_creator);
-    Ok((canvas, textures, event_pump))
+
+    let event_pump = context.event_pump()?;
+
+    Ok((canvas, textures, event_pump, controllers))
 }
 
 // fn legacy_main() {
