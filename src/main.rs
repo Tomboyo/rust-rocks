@@ -1,3 +1,5 @@
+#![feature(duration_zero)]
+
 mod component;
 mod entity;
 mod resource;
@@ -10,37 +12,48 @@ use std::{
 
 use entity::{asteroid, player};
 use legion::{Resources, Schedule, World};
-use resource::{controllers::Controllers, input_events::InputEvents, textures::Textures};
+use resource::{
+    bounds::Bounds, controllers::Controllers, delta_time::DeltaTime, input_events::InputEvents,
+    textures::Textures,
+};
 use sdl2::{event::Event, render::Canvas, video::Window, EventPump};
 use system::player_input::PlayerInputState;
 
 fn main() {
     env_logger::init();
 
-    let bounds = (800.0, 600.0);
     let mut world = World::default();
-    world.push(asteroid::new(bounds));
-    world.push(player::new(bounds));
+    let bounds = Bounds {
+        width: 800.0,
+        height: 600.0,
+    };
+    world.push(asteroid::new(&bounds));
+    world.push(asteroid::new(&bounds));
+    world.push(asteroid::new(&bounds));
+    world.push(asteroid::new(&bounds));
+    world.push(asteroid::new(&bounds));
+    world.push(player::new(&bounds));
 
     // game controllers self-close when droppedd; the unused "controllers" holds
     // them open until we are done.
     let (canvas, textures, mut event_pump, _controllers) = create_context().unwrap();
     let mut resources = Resources::default();
+    resources.insert(bounds);
     resources.insert(canvas);
     resources.insert(textures);
     resources.insert(InputEvents::new(Vec::new()));
+    resources.insert(DeltaTime::new());
 
     let mut schedule = Schedule::builder()
         .add_thread_local(system::render::render_system())
         .add_system(system::player_input::player_input_system(
             PlayerInputState::default(),
         ))
+        .add_system(system::movement_system::movement_system())
         .build();
 
     let min = Duration::from_millis(16);
     loop {
-        let start = Instant::now();
-
         let events: Vec<Event> = event_pump.poll_iter().collect();
         if events.iter().any(|x| matches!(x, Event::Quit { .. })) {
             break;
@@ -51,10 +64,12 @@ fn main() {
 
         schedule.execute(&mut world, &mut resources);
 
-        let elapsed = start.elapsed();
-        if elapsed < min {
-            std::thread::sleep(min - elapsed);
+        let mut delta_time = resources.remove::<DeltaTime>().unwrap();
+        if delta_time.elapsed < min {
+            std::thread::sleep(min - delta_time.elapsed);
         }
+
+        resources.insert(delta_time.since());
     }
 }
 
