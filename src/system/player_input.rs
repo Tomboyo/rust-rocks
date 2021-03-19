@@ -1,7 +1,10 @@
 use legion::{system, world::SubWorld, IntoQuery};
 use sdl2::{controller::Axis, event::Event};
 
-use crate::component::{Orientation, PlayerInput};
+use crate::{
+    component::{Orientation, PlayerInput, Thrusters, Velocity},
+    resource::delta_time::DeltaTime,
+};
 
 use crate::resource::input_events::InputEvents;
 
@@ -9,74 +12,114 @@ use crate::resource::input_events::InputEvents;
 /// reported as an event only if it changes, we need this state to determine the
 /// updated orientation of the player.
 pub struct PlayerInputState {
-    normal_x: f32,
-    normal_y: f32,
+    right_normal_x: f32,
+    right_normal_y: f32,
+    left_normal_x: f32,
+    left_normal_y: f32,
 }
 
 impl Default for PlayerInputState {
     fn default() -> Self {
         PlayerInputState {
-            normal_x: 0.0,
-            normal_y: 0.0,
+            right_normal_x: 0.0,
+            right_normal_y: 0.0,
+            left_normal_x: 0.0,
+            left_normal_y: 0.0,
         }
     }
 }
 
 #[system]
 #[read_component(PlayerInput)]
+#[read_component(Thrusters)]
 #[write_component(Orientation)]
+#[write_component(Velocity)]
 pub fn player_input(
     world: &mut SubWorld,
     #[resource] events: &InputEvents,
+    #[resource] time: &DeltaTime,
     #[state] state: &mut PlayerInputState,
 ) {
-    // We ignore the possibility of two controllers sending input for now.
+    update_orientation(world, events, time, state);
+    update_speed(world, events, time, state);
+}
 
-    let normal_y = events
-        .iter()
-        .filter(|event| match event {
-            Event::ControllerAxisMotion { axis, .. } if *axis == Axis::RightY => true,
-            _ => false,
-        })
-        .map(|event| match event {
-            Event::ControllerAxisMotion { value, .. } => normalize_axis(*value),
-            _ => panic!("Event should be guaranteed by filter"),
-        })
-        .next();
-
-    let normal_x = events
-        .iter()
-        .filter(|event| match event {
-            Event::ControllerAxisMotion { axis, .. } if *axis == Axis::RightX => true,
-            _ => false,
-        })
-        .map(|event| match event {
-            Event::ControllerAxisMotion { value, .. } => normalize_axis(*value),
-            _ => panic!("Event should be guaranteed by filter"),
-        })
-        .next();
+// We ignore the possibility of two controllers sending input for now.
+fn update_orientation(
+    world: &mut SubWorld,
+    events: &InputEvents,
+    _time: &DeltaTime,
+    state: &mut PlayerInputState,
+) {
+    let normal_x = find_axis_normal(events.iter(), Axis::RightX);
+    let normal_y = find_axis_normal(events.iter(), Axis::RightY);
 
     if let Some(y) = normal_y {
-        state.normal_y = y;
+        state.right_normal_y = with_dead_zone(y, 0.05);
     }
 
     if let Some(x) = normal_x {
-        state.normal_x = x;
+        state.right_normal_x = with_dead_zone(x, 0.05);
     }
 
-    if normal_y.is_none() && normal_x.is_none() {
-        // no updates this frame, nothing to do.
-        return;
+    if normal_y.is_some() || normal_x.is_some() {
+        if let Some(angle) = axis_angle(state.right_normal_x, state.right_normal_y) {
+            // Now that we certainly have an angle, we query for the player
+            // orientation
+            let mut query = <(&mut Orientation, &PlayerInput)>::query();
+            query.for_each_mut(world, move |(orientation, _)| {
+                orientation.0 = angle;
+            });
+        }
+    }
+}
+
+fn update_speed(
+    world: &mut SubWorld,
+    events: &InputEvents,
+    time: &DeltaTime,
+    state: &mut PlayerInputState,
+) {
+    let normal_x = find_axis_normal(events.iter(), Axis::LeftX);
+    let normal_y = find_axis_normal(events.iter(), Axis::LeftY);
+
+    if let Some(y) = normal_y {
+        state.left_normal_y = y;
     }
 
-    if let Some(angle) = axis_angle(state.normal_x, state.normal_y) {
-        // Now that we certainly have an angle, we query for the player
-        // orientation
-        let mut query = <(&mut Orientation, &PlayerInput)>::query();
-        query.for_each_mut(world, move |(orientation, _)| {
-            orientation.0 = angle;
-        });
+    if let Some(x) = normal_x {
+        state.left_normal_x = x;
     }
+
+    let dx = with_dead_zone(state.left_normal_x, 0.05);
+    let dy = with_dead_zone(state.left_normal_y, 0.05);
+    let delta_time = time.as_f32();
+    let mut query = <(&mut Velocity, &Thrusters, &PlayerInput)>::query();
+    query.for_each_mut(world, move |(velocity, thrusters, _)| {
+        velocity.dx = clamp(
+            velocity.dx + dx * thrusters.magnitude * delta_time,
+            -thrusters.max,
+            thrusters.max,
+        );
+        velocity.dy = clamp(
+            velocity.dy + dy * thrusters.magnitude * delta_time,
+            -thrusters.max,
+            thrusters.max,
+        );
+    })
+}
+
+fn find_axis_normal<'a>(events: impl Iterator<Item = &'a Event>, which_axis: Axis) -> Option<f32> {
+    events
+        .filter(|event| match event {
+            Event::ControllerAxisMotion { axis, .. } if *axis == which_axis => true,
+            _ => false,
+        })
+        .map(|event| match event {
+            Event::ControllerAxisMotion { value, .. } => normalize_axis(*value),
+            _ => panic!("Event should be guaranteed by filter"),
+        })
+        .next()
 }
 
 /// Convert an axis i16 reading to f32 between -1.0 and 1.0 inclusive
@@ -85,6 +128,22 @@ fn normalize_axis(value: i16) -> f32 {
         value as f32 / 32_767.0
     } else {
         value as f32 / 32_768.0
+    }
+}
+
+fn with_dead_zone(reading: f32, minimum: f32) -> f32 {
+    if reading.abs() > minimum {
+        reading
+    } else {
+        0.0
+    }
+}
+
+fn clamp(value: f32, min: f32, max: f32) -> f32 {
+    match value {
+        x if x < min => min,
+        x if x > max => max,
+        x => x,
     }
 }
 

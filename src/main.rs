@@ -5,10 +5,7 @@ mod entity;
 mod resource;
 mod system;
 
-use std::{
-    error::Error,
-    time::{Duration, Instant},
-};
+use std::{error::Error, time::Duration};
 
 use entity::{asteroid, player};
 use legion::{Resources, Schedule, World};

@@ -1,20 +1,14 @@
-use std::{
-    ops::Deref,
-    time::{Duration, Instant},
-};
+use std::time::{Duration, Instant};
 
 pub struct DeltaTime {
     pub elapsed: Duration,
-    from: Instant,
-    to: Instant,
+    since: Instant,
 }
 
 impl DeltaTime {
     pub fn new() -> Self {
-        let now = Instant::now();
         Self {
-            from: now,
-            to: now,
+            since: Instant::now(),
             elapsed: Duration::ZERO,
         }
     }
@@ -22,9 +16,8 @@ impl DeltaTime {
     pub fn since(&mut self) -> Self {
         let now = Instant::now();
         Self {
-            from: self.to,
-            to: now,
-            elapsed: now.duration_since(self.to),
+            since: now,
+            elapsed: now.duration_since(self.since),
         }
     }
 

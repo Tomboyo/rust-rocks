@@ -1,5 +1,7 @@
 use crate::{
-    component::{HitMask, Orientation, PlayerInput, Position, Sprite, SpriteKind, Velocity},
+    component::{
+        HitMask, Orientation, PlayerInput, Position, Sprite, SpriteKind, Thrusters, Velocity,
+    },
     resource::bounds::Bounds,
 };
 
@@ -10,6 +12,7 @@ pub fn new(
 ) -> (
     Position,
     Velocity,
+    Thrusters,
     Orientation,
     Sprite,
     HitMask,
@@ -21,6 +24,10 @@ pub fn new(
             y: bounds.height / 2.0,
         },
         Velocity { dx: 0.0, dy: 0.0 },
+        Thrusters {
+            magnitude: 500.0,
+            max: 600.0,
+        },
         Orientation(0.0),
         Sprite {
             kind: SpriteKind::Player,

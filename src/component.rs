@@ -10,6 +10,12 @@ pub struct Velocity {
     pub dy: f32,
 }
 
+#[derive(Clone, Copy, Debug)]
+pub struct Thrusters {
+    pub magnitude: f32,
+    pub max: f32,
+}
+
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub struct Orientation(pub f32);
 
@@ -27,9 +33,9 @@ pub struct Sprite {
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Hash)]
 pub enum SpriteKind {
     Asteroid,
-    Bullet,
+    // Bullet,
     Player,
-    Title,
+    // Title,
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
