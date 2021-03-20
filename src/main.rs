@@ -47,6 +47,7 @@ fn main() {
             PlayerInputState::default(),
         ))
         .add_system(system::movement_system::movement_system())
+        .add_system(system::timeout::timeout_system())
         .build();
 
     let min = Duration::from_millis(16);

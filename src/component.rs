@@ -1,3 +1,5 @@
+use std::time::Instant;
+
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Position {
     pub x: f32,
@@ -18,6 +20,8 @@ pub struct Thrusters {
 
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub struct Orientation(pub f32);
+
+pub struct Timeout(pub Instant);
 
 #[derive(Clone, Copy, Debug)]
 pub enum HitMask {
