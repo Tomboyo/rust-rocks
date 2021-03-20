@@ -1,7 +1,7 @@
 use std::time::{Duration, Instant};
 
 use crate::component::{
-    Bullet, HitMask, Orientation, Position, Sprite, SpriteKind, Timeout, Velocity,
+    Bullet, DestroyTimeout, HitMask, Orientation, Position, Sprite, SpriteKind, Velocity,
 };
 
 pub fn new(
@@ -13,7 +13,7 @@ pub fn new(
     Velocity,
     Orientation,
     Sprite,
-    Timeout,
+    DestroyTimeout,
     HitMask,
     Bullet,
 ) {
@@ -24,7 +24,9 @@ pub fn new(
         Sprite {
             kind: SpriteKind::Bullet,
         },
-        Timeout(Instant::now() + Duration::from_secs(2)),
+        DestroyTimeout {
+            when: Instant::now() + Duration::from_secs(2),
+        },
         HitMask::Point,
         Bullet,
     )

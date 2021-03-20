@@ -24,7 +24,10 @@ pub struct Thrusters {
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub struct Orientation(pub f32);
 
-pub struct Timeout(pub Instant);
+pub struct DestroyTimeout {
+    pub when: Instant,
+}
+}
 
 #[derive(Clone, Copy, Debug)]
 pub enum HitMask {
