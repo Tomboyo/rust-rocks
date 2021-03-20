@@ -33,7 +33,7 @@ pub struct Sprite {
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Hash)]
 pub enum SpriteKind {
     Asteroid,
-    // Bullet,
+    Bullet,
     Player,
     // Title,
 }

@@ -22,6 +22,10 @@ impl<'a> Textures {
             SpriteKind::Player,
             Self::load_texture(texture_creator, "player-ship.bmp"),
         );
+        textures.insert(
+            SpriteKind::Bullet,
+            Self::load_texture(texture_creator, "bullet.bmp"),
+        );
         Self { textures }
     }
 

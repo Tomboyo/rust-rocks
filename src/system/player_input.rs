@@ -1,8 +1,12 @@
-use legion::{system, world::SubWorld, IntoQuery};
-use sdl2::{controller::Axis, event::Event};
+use legion::{system, systems::CommandBuffer, world::SubWorld, IntoQuery};
+use sdl2::{
+    controller::{Axis, Button},
+    event::Event,
+};
 
 use crate::{
-    component::{Orientation, PlayerInput, Thrusters, Velocity},
+    component::{Orientation, PlayerInput, Position, Thrusters, Velocity},
+    entity,
     resource::delta_time::DeltaTime,
 };
 
@@ -32,10 +36,12 @@ impl Default for PlayerInputState {
 #[system]
 #[read_component(PlayerInput)]
 #[read_component(Thrusters)]
+#[read_component(Position)]
 #[write_component(Orientation)]
 #[write_component(Velocity)]
 pub fn player_input(
     world: &mut SubWorld,
+    cmd: &mut CommandBuffer,
     #[resource] events: &InputEvents,
     #[resource] time: &DeltaTime,
     #[state] state: &mut PlayerInputState,
@@ -43,24 +49,52 @@ pub fn player_input(
     update_state(state, events);
 
     let delta_time = time.as_f32();
-    <(&mut Orientation, &mut Velocity, &Thrusters, &PlayerInput)>::query().for_each_mut(
-        world,
-        |(orientation, velocity, thrusters, _)| {
-            axis_angle(state.right_normal_x, state.right_normal_y).map(|v| orientation.0 = v);
+    <(
+        &mut Orientation,
+        &mut Velocity,
+        &Position,
+        &Thrusters,
+        &PlayerInput,
+    )>::query()
+    .for_each_mut(world, |(orientation, velocity, position, thrusters, _)| {
+        axis_angle(state.right_normal_x, state.right_normal_y).map(|v| orientation.0 = v);
 
-            velocity.dx = clamp(
-                velocity.dx + state.left_normal_x * thrusters.magnitude * delta_time,
-                -thrusters.max,
-                thrusters.max,
-            );
+        velocity.dx = clamp(
+            velocity.dx + state.left_normal_x * thrusters.magnitude * delta_time,
+            -thrusters.max,
+            thrusters.max,
+        );
 
-            velocity.dy = clamp(
-                velocity.dy + state.left_normal_y * thrusters.magnitude * delta_time,
-                -thrusters.max,
-                thrusters.max,
-            );
-        },
-    )
+        velocity.dy = clamp(
+            velocity.dy + state.left_normal_y * thrusters.magnitude * delta_time,
+            -thrusters.max,
+            thrusters.max,
+        );
+
+        if fire_bullet(events) {
+            let angle = orientation.0.to_radians();
+            cmd.push(entity::bullet::new(
+                position.clone(),
+                Velocity {
+                    dx: angle.cos() * 1_000.0,
+                    dy: angle.sin() * 1_000.0,
+                },
+                orientation.clone(),
+            ));
+        }
+    });
+}
+
+fn fire_bullet(events: &InputEvents) -> bool {
+    events.iter().any(|event| {
+        matches!(
+            event,
+            Event::ControllerButtonDown {
+                button: Button::RightShoulder,
+                ..
+            }
+        )
+    })
 }
 
 fn update_state(state: &mut PlayerInputState, events: &InputEvents) {
