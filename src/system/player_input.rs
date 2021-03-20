@@ -40,73 +40,38 @@ pub fn player_input(
     #[resource] time: &DeltaTime,
     #[state] state: &mut PlayerInputState,
 ) {
-    update_orientation(world, events, time, state);
-    update_speed(world, events, time, state);
-}
+    update_state(state, events);
 
-// We ignore the possibility of two controllers sending input for now.
-fn update_orientation(
-    world: &mut SubWorld,
-    events: &InputEvents,
-    _time: &DeltaTime,
-    state: &mut PlayerInputState,
-) {
-    let normal_x = find_axis_normal(events.iter(), Axis::RightX);
-    let normal_y = find_axis_normal(events.iter(), Axis::RightY);
-
-    if let Some(y) = normal_y {
-        state.right_normal_y = with_dead_zone(y, 0.05);
-    }
-
-    if let Some(x) = normal_x {
-        state.right_normal_x = with_dead_zone(x, 0.05);
-    }
-
-    if normal_y.is_some() || normal_x.is_some() {
-        if let Some(angle) = axis_angle(state.right_normal_x, state.right_normal_y) {
-            // Now that we certainly have an angle, we query for the player
-            // orientation
-            let mut query = <(&mut Orientation, &PlayerInput)>::query();
-            query.for_each_mut(world, move |(orientation, _)| {
-                orientation.0 = angle;
-            });
-        }
-    }
-}
-
-fn update_speed(
-    world: &mut SubWorld,
-    events: &InputEvents,
-    time: &DeltaTime,
-    state: &mut PlayerInputState,
-) {
-    let normal_x = find_axis_normal(events.iter(), Axis::LeftX);
-    let normal_y = find_axis_normal(events.iter(), Axis::LeftY);
-
-    if let Some(y) = normal_y {
-        state.left_normal_y = y;
-    }
-
-    if let Some(x) = normal_x {
-        state.left_normal_x = x;
-    }
-
-    let dx = with_dead_zone(state.left_normal_x, 0.05);
-    let dy = with_dead_zone(state.left_normal_y, 0.05);
     let delta_time = time.as_f32();
-    let mut query = <(&mut Velocity, &Thrusters, &PlayerInput)>::query();
-    query.for_each_mut(world, move |(velocity, thrusters, _)| {
-        velocity.dx = clamp(
-            velocity.dx + dx * thrusters.magnitude * delta_time,
-            -thrusters.max,
-            thrusters.max,
-        );
-        velocity.dy = clamp(
-            velocity.dy + dy * thrusters.magnitude * delta_time,
-            -thrusters.max,
-            thrusters.max,
-        );
-    })
+    <(&mut Orientation, &mut Velocity, &Thrusters, &PlayerInput)>::query().for_each_mut(
+        world,
+        |(orientation, velocity, thrusters, _)| {
+            axis_angle(state.right_normal_x, state.right_normal_y).map(|v| orientation.0 = v);
+
+            velocity.dx = clamp(
+                velocity.dx + state.left_normal_x * thrusters.magnitude * delta_time,
+                -thrusters.max,
+                thrusters.max,
+            );
+
+            velocity.dy = clamp(
+                velocity.dy + state.left_normal_y * thrusters.magnitude * delta_time,
+                -thrusters.max,
+                thrusters.max,
+            );
+        },
+    )
+}
+
+fn update_state(state: &mut PlayerInputState, events: &InputEvents) {
+    read_axis(events, Axis::LeftX).map(|v| state.left_normal_x = v);
+    read_axis(events, Axis::LeftY).map(|v| state.left_normal_y = v);
+    read_axis(events, Axis::RightX).map(|v| state.right_normal_x = v);
+    read_axis(events, Axis::RightY).map(|v| state.right_normal_y = v);
+}
+
+fn read_axis(events: &InputEvents, axis: Axis) -> Option<f32> {
+    find_axis_normal(events.iter(), axis).map(|v| with_dead_zone(v, 0.05))
 }
 
 fn find_axis_normal<'a>(events: impl Iterator<Item = &'a Event>, which_axis: Axis) -> Option<f32> {
