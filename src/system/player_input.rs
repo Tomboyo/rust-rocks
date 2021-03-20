@@ -98,15 +98,15 @@ fn fire_bullet(events: &InputEvents) -> bool {
 }
 
 fn update_state(state: &mut PlayerInputState, events: &InputEvents) {
-    read_axis(events, Axis::LeftX).map(|v| state.left_normal_x = v);
-    read_axis(events, Axis::LeftY).map(|v| state.left_normal_y = v);
-    read_axis(events, Axis::RightX).map(|v| state.right_normal_x = v);
-    read_axis(events, Axis::RightY).map(|v| state.right_normal_y = v);
+    read_axis(events, Axis::LeftX, 0.3).map(|v| state.left_normal_x = v);
+    read_axis(events, Axis::LeftY, 0.3).map(|v| state.left_normal_y = v);
+    read_axis(events, Axis::RightX, 0.05).map(|v| state.right_normal_x = v);
+    read_axis(events, Axis::RightY, 0.05).map(|v| state.right_normal_y = v);
 }
 
 /// Read a controller axis as an f32 in the range 0..=1. All readings are
 /// subject to a dead zone such that small readings are changed to 0.0.
-fn read_axis<'a>(events: &InputEvents, which_axis: Axis) -> Option<f32> {
+fn read_axis<'a>(events: &InputEvents, which_axis: Axis, dead_zone: f32) -> Option<f32> {
     events
         .iter()
         .filter(|event| match event {
@@ -117,7 +117,7 @@ fn read_axis<'a>(events: &InputEvents, which_axis: Axis) -> Option<f32> {
             Event::ControllerAxisMotion { value, .. } => normalize_axis(*value),
             _ => panic!("Event should be guaranteed by filter"),
         })
-        .map(dead_zone(0.3))
+        .map(|v| if v.abs() > dead_zone { v } else { 0.0 })
         .next()
 }
 
@@ -128,11 +128,6 @@ fn normalize_axis(value: i16) -> f32 {
     } else {
         value as f32 / 32_768.0
     }
-}
-
-/// Zero any reading less than the minimum value.
-fn dead_zone(minimum: f32) -> impl Fn(f32) -> f32 {
-    move |v| if v.abs() > minimum { v } else { 0.0 }
 }
 
 fn clamp(value: f32, min: f32, max: f32) -> f32 {
