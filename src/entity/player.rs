@@ -5,8 +5,6 @@ use crate::{
     resource::bounds::Bounds,
 };
 
-// const MAX_SPEED: f32 = 5.0;
-
 pub fn new(
     bounds: &Bounds,
 ) -> (
