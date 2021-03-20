@@ -14,4 +14,4 @@ rand = "^0.8"
 
 [dependencies.sdl2]
 version = "^0.34"
-features = ["image", "ttf", "unsafe_textures"]
+features = ["image", "ttf", "unsafe_textures", "gfx"]

@@ -2,18 +2,20 @@
 
 mod component;
 mod entity;
+mod fps_counter;
 mod resource;
 mod system;
 
-use std::{error::Error, time::Duration};
+use std::error::Error;
 
 use entity::{asteroid, player};
+use fps_counter::FpsCounter;
 use legion::{Resources, Schedule, World};
 use resource::{
     bounds::Bounds, controllers::Controllers, delta_time::DeltaTime, input_events::InputEvents,
     textures::Textures,
 };
-use sdl2::{event::Event, render::Canvas, video::Window, EventPump};
+use sdl2::{event::Event, gfx::framerate::FPSManager, render::Canvas, video::Window, EventPump};
 use system::player_input::PlayerInputState;
 
 fn main() {
@@ -50,24 +52,27 @@ fn main() {
         .add_system(system::timeout::timeout_system())
         .build();
 
-    let min = Duration::from_millis(16);
+    let mut fps_manager = FPSManager::new();
+    fps_manager.set_framerate(60).unwrap();
+    let mut fps_counter = FpsCounter::new();
+
     loop {
         let events: Vec<Event> = event_pump.poll_iter().collect();
         if events.iter().any(|x| matches!(x, Event::Quit { .. })) {
             break;
         }
 
-        resources.remove::<InputEvents>();
         resources.insert(InputEvents::new(events));
 
         schedule.execute(&mut world, &mut resources);
 
-        let mut delta_time = resources.remove::<DeltaTime>().unwrap();
-        if delta_time.elapsed < min {
-            std::thread::sleep(min - delta_time.elapsed);
+        if let Some(frames) = fps_counter.tick() {
+            log::debug!("FPS = {}", frames);
         }
 
-        resources.insert(delta_time.since());
+        resources.get_mut::<DeltaTime>().unwrap().update();
+
+        fps_manager.delay();
     }
 }
 

@@ -13,12 +13,11 @@ impl DeltaTime {
         }
     }
 
-    pub fn since(&mut self) -> Self {
+    /// Calculate the elapsed time since the last call to update
+    pub fn update(&mut self) {
         let now = Instant::now();
-        Self {
-            since: now,
-            elapsed: now.duration_since(self.since),
-        }
+        self.elapsed = now.duration_since(self.since);
+        self.since = now;
     }
 
     pub fn as_f32(&self) -> f32 {

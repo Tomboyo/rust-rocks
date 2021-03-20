@@ -14,7 +14,7 @@ I currently test on Linux, but ostensibly this should compile to other operating
 
 == Build
 
-You may need to install development packages for SDL2 since not all of the features are bundled. These may include (on Fedora) `SDL2-devel` and `SDL2_image-devel`.
+You may need to install development packages for SDL2 since not all of the features are bundled. These may include (on Fedora) `SDL2-devel`, `SDL2_gfx-devel`, and `SDL2_image-devel`.
 
 Otherwise, simply invoke `cargo build` to compile.
 
