@@ -9,7 +9,9 @@ use crate::{
 
 const SPEED_RANGE: RangeInclusive<f32> = -100.0..=100.0; // pixels per second
 
-pub fn new(bounds: &Bounds) -> (Position, Velocity, Orientation, Sprite, HitMask, Asteroid) {
+pub type AsteroidComponents = (Position, Velocity, Orientation, Sprite, HitMask, Asteroid);
+
+pub fn new<'a>(bounds: &'a Bounds) -> AsteroidComponents {
     let mut rng = rand::thread_rng();
     let (x, y) = coords_on_edge(bounds, &mut rng);
     (

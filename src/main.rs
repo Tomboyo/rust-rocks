@@ -51,6 +51,8 @@ fn main() {
         .add_system(system::movement::movement_system())
         .add_system(system::timeout::timeout_system())
         .add_system(system::collision::collision_system())
+        .add_system(system::spawn_asteroid::create_spawn_timeout_system())
+        .add_system(system::spawn_asteroid::spawn_asteroids_system())
         .build();
 
     let mut fps_manager = FPSManager::new();

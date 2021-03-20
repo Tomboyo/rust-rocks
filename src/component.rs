@@ -27,6 +27,9 @@ pub struct Orientation(pub f32);
 pub struct DestroyTimeout {
     pub when: Instant,
 }
+
+pub struct SpawnTimeout {
+    pub when: Instant,
 }
 
 #[derive(Clone, Copy, Debug)]
