@@ -74,12 +74,12 @@ pub fn player_input(
         if fire_bullet(events) {
             let angle = orientation.0.to_radians();
             cmd.push(entity::bullet::new(
-                position.clone(),
+                *position,
                 Velocity {
                     dx: angle.cos() * 1_000.0,
                     dy: angle.sin() * 1_000.0,
                 },
-                orientation.clone(),
+                *orientation,
             ));
         }
     });

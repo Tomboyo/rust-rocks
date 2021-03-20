@@ -50,6 +50,7 @@ fn main() {
         ))
         .add_system(system::movement_system::movement_system())
         .add_system(system::timeout::timeout_system())
+        .add_system(system::collision::collision_system())
         .build();
 
     let mut fps_manager = FPSManager::new();

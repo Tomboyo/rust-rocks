@@ -3,13 +3,13 @@ use std::ops::RangeInclusive;
 use rand::{prelude::ThreadRng, Rng};
 
 use crate::{
-    component::{HitMask, Orientation, Position, Sprite, SpriteKind, Velocity},
+    component::{Asteroid, HitMask, Orientation, Position, Sprite, SpriteKind, Velocity},
     resource::bounds::Bounds,
 };
 
 const SPEED_RANGE: RangeInclusive<f32> = -100.0..=100.0; // pixels per second
 
-pub fn new(bounds: &Bounds) -> (Position, Velocity, Orientation, Sprite, HitMask) {
+pub fn new(bounds: &Bounds) -> (Position, Velocity, Orientation, Sprite, HitMask, Asteroid) {
     let mut rng = rand::thread_rng();
     let (x, y) = coords_on_edge(bounds, &mut rng);
     (
@@ -22,7 +22,8 @@ pub fn new(bounds: &Bounds) -> (Position, Velocity, Orientation, Sprite, HitMask
         Sprite {
             kind: SpriteKind::Asteroid,
         },
-        HitMask::Circle { radius: 10.0 },
+        HitMask::Circle { radius: 32.0 },
+        Asteroid,
     )
 }
 
