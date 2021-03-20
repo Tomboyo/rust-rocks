@@ -1,6 +1,9 @@
 use legion::{system, systems::CommandBuffer, world::SubWorld, Entity, IntoQuery};
 
-use crate::component::{Asteroid, Bullet, HitMask, Position};
+use crate::{
+    component::{Asteroid, Bullet, HitMask, Position},
+    resource::score::Score,
+};
 
 #[system]
 #[read_component(Entity)]
@@ -8,26 +11,19 @@ use crate::component::{Asteroid, Bullet, HitMask, Position};
 #[read_component(Bullet)]
 #[read_component(Position)]
 #[read_component(HitMask)]
-pub fn collision(world: &mut SubWorld, cmd: &mut CommandBuffer) {
-    <(&Position, &HitMask, Entity, &Bullet)>::query().for_each(
-        world,
-        |(bullet_position, bullet_mask, bullet, _)| {
-            <(&Position, &HitMask, Entity, &Asteroid)>::query().for_each(
-                world,
-                |(asteroid_position, asteroid_mask, asteroid, _)| {
-                    if is_collision(
-                        bullet_position,
-                        bullet_mask,
-                        asteroid_position,
-                        asteroid_mask,
-                    ) {
-                        cmd.remove(*bullet);
-                        cmd.remove(*asteroid);
-                    }
-                },
-            );
-        },
-    );
+pub fn collision(world: &mut SubWorld, cmd: &mut CommandBuffer, #[resource] score: &mut Score) {
+    let mut asteroids = <(&Position, &HitMask, Entity, &Asteroid)>::query();
+    let mut bullets = <(&Position, &HitMask, Entity, &Bullet)>::query();
+
+    asteroids.for_each(world, |asteroid| {
+        bullets.for_each(world, |bullet| {
+            if is_collision(asteroid.0, asteroid.1, bullet.0, bullet.1) {
+                cmd.remove(*asteroid.2);
+                cmd.remove(*bullet.2);
+                *score += 1;
+            }
+        })
+    });
 }
 
 fn is_collision(p1: &Position, m1: &HitMask, p2: &Position, m2: &HitMask) -> bool {

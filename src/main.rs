@@ -13,7 +13,7 @@ use fps_counter::FpsCounter;
 use legion::{Resources, Schedule, World};
 use resource::{
     bounds::Bounds, controllers::Controllers, delta_time::DeltaTime, input_events::InputEvents,
-    textures::Textures,
+    score::Score, textures::Textures,
 };
 use sdl2::{event::Event, gfx::framerate::FPSManager, render::Canvas, video::Window, EventPump};
 use system::player_input::PlayerInputState;
@@ -42,6 +42,7 @@ fn main() {
     resources.insert(textures);
     resources.insert(InputEvents::new(Vec::new()));
     resources.insert(DeltaTime::new());
+    resources.insert(Score::new());
 
     let mut schedule = Schedule::builder()
         .add_thread_local(system::render::render_system())
@@ -71,6 +72,7 @@ fn main() {
 
         if let Some(frames) = fps_counter.tick() {
             log::debug!("FPS = {}", frames);
+            log::info!("Score = {:?}", resources.get::<Score>().unwrap());
         }
 
         resources.get_mut::<DeltaTime>().unwrap().update();

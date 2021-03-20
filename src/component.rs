@@ -1,6 +1,7 @@
 use std::time::Instant;
 
 pub struct Asteroid;
+
 pub struct Bullet;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
