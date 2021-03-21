@@ -1,3 +1,5 @@
+use std::{rc::Rc, sync::Mutex};
+
 use legion::{system, world::SubWorld, IntoQuery};
 use sdl2::{rect::Rect, render::Canvas, video::Window};
 
@@ -12,9 +14,11 @@ use crate::{
 #[read_component(Sprite)]
 pub fn render(
     world: &mut SubWorld,
-    #[resource] canvas: &mut Canvas<Window>,
-    #[resource] tm: &Textures,
+    #[resource] canvas: &mut Rc<Mutex<Canvas<Window>>>,
+    #[resource] tm: &Rc<Textures>,
 ) {
+    let mut canvas = canvas.lock().unwrap();
+
     canvas.clear();
 
     let mut query = <(&Position, &Orientation, &Sprite)>::query();

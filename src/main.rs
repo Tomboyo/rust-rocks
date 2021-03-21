@@ -4,57 +4,42 @@ mod component;
 mod entity;
 mod fps_counter;
 mod resource;
+mod scene;
 mod system;
 
-use std::error::Error;
+use std::{error::Error, rc::Rc, sync::Mutex};
 
-use entity::{asteroid, player};
 use fps_counter::FpsCounter;
-use legion::{Resources, Schedule, World};
 use resource::{
-    bounds::Bounds, controllers::Controllers, delta_time::DeltaTime, input_events::InputEvents,
-    score::Score, textures::Textures,
+    bounds::Bounds, controllers::Controllers, input_events::InputEvents, textures::Textures,
 };
-use sdl2::{event::Event, gfx::framerate::FPSManager, render::Canvas, video::Window, EventPump};
-use system::player_input::PlayerInputState;
+use scene::{game::GameScene, Scene};
+use sdl2::{event::Event, gfx::framerate::FPSManager};
 
-fn main() {
+fn main() -> Result<(), Box<dyn Error>> {
     env_logger::init();
 
-    let mut world = World::default();
     let bounds = Bounds {
         width: 800.0,
         height: 600.0,
     };
-    world.push(asteroid::new(&bounds));
-    world.push(asteroid::new(&bounds));
-    world.push(asteroid::new(&bounds));
-    world.push(asteroid::new(&bounds));
-    world.push(asteroid::new(&bounds));
-    world.push(player::new(&bounds));
 
-    // game controllers self-close when droppedd; the unused "controllers" holds
-    // them open until we are done.
-    let (canvas, textures, mut event_pump, _controllers) = create_context().unwrap();
-    let mut resources = Resources::default();
-    resources.insert(bounds);
-    resources.insert(canvas);
-    resources.insert(textures);
-    resources.insert(InputEvents::new(Vec::new()));
-    resources.insert(DeltaTime::new());
-    resources.insert(Score::new());
+    let context = sdl2::init()?;
+    let gcs = context.game_controller()?;
+    let _controllers = Controllers::new(&gcs)?;
 
-    let mut schedule = Schedule::builder()
-        .add_thread_local(system::render::render_system())
-        .add_system(system::player_input::player_input_system(
-            PlayerInputState::default(),
-        ))
-        .add_system(system::movement::movement_system())
-        .add_system(system::timeout::timeout_system())
-        .add_system(system::collision::collision_system())
-        .add_system(system::spawn_asteroid::create_spawn_timeout_system())
-        .add_system(system::spawn_asteroid::spawn_asteroids_system())
-        .build();
+    let video = context.video()?;
+    let window = video
+        .window("Rust Rocks", bounds.width as u32, bounds.height as u32)
+        .position_centered()
+        .build()?;
+    let canvas = Rc::new(Mutex::new(window.into_canvas().build()?));
+    let texture_creator = canvas.lock().unwrap().texture_creator();
+    let textures = Rc::new(Textures::new(&texture_creator));
+
+    let mut event_pump = context.event_pump()?;
+
+    let mut scene = GameScene::new(bounds, Rc::clone(&textures), Rc::clone(&canvas));
 
     let mut fps_manager = FPSManager::new();
     fps_manager.set_framerate(60).unwrap();
@@ -66,38 +51,16 @@ fn main() {
             break;
         }
 
-        resources.insert(InputEvents::new(events));
-
-        schedule.execute(&mut world, &mut resources);
+        scene.run(InputEvents::new(events));
 
         if let Some(frames) = fps_counter.tick() {
             log::debug!("FPS = {}", frames);
-            log::info!("Score = {:?}", resources.get::<Score>().unwrap());
         }
-
-        resources.get_mut::<DeltaTime>().unwrap().update();
 
         fps_manager.delay();
     }
-}
 
-fn create_context() -> Result<(Canvas<Window>, Textures, EventPump, Controllers), Box<dyn Error>> {
-    let context = sdl2::init()?;
-    let gcs = context.game_controller()?;
-    let controllers = Controllers::new(&gcs)?;
-
-    let video = context.video()?;
-    let window = video
-        .window("Rust Rocks", 800, 600)
-        .position_centered()
-        .build()?;
-    let canvas = window.into_canvas().build()?;
-    let texture_creator = canvas.texture_creator();
-    let textures = Textures::new(&texture_creator);
-
-    let event_pump = context.event_pump()?;
-
-    Ok((canvas, textures, event_pump, controllers))
+    Ok(())
 }
 
 // fn legacy_main() {
