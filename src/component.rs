@@ -49,7 +49,7 @@ pub enum SpriteKind {
     Asteroid,
     Bullet,
     Player,
-    // Title,
+    Title,
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]

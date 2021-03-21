@@ -26,6 +26,10 @@ impl<'a> Textures {
             SpriteKind::Bullet,
             Self::load_texture(texture_creator, "bullet.bmp"),
         );
+        textures.insert(
+            SpriteKind::Title,
+            Self::load_texture(texture_creator, "title.bmp"),
+        );
         Self { textures }
     }
 
