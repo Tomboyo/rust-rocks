@@ -1,16 +1,12 @@
 = Rust Rocks
 
-This is a for-fun Asteroids-like game implemented in Rust using SDL2 bindings.
+An Asteroids-like game built for fun using link:https://github.com/Rust-SDL2/rust-sdl2[rust-SDL2] and link:https://github.com/amethyst/legion[Legion].
 
 == Controls
 
-At time of writing, this game responds to xbox-like gamepad controls only (specifically anything supported by SDL2's game controller subsystem). I use a Logitech F710 for testing.
+Only xbox-pattern gamepad controls are currently supported. I use a Logitech F710 for testing.
 
-Use the D-Pad to navigtate menu options. Use the `Left Joystick` to move, the `Right Joystick` to aim, and the `Right Bumper` to shoot.
-
-== Compatibility
-
-I currently test on Linux, but ostensibly this should compile to other operating systems. I have not yet tried.
+Use the d-pad to navigate menu options, the left thumbstick to accelerate, the right thumbstick to aim, and the right bumper to shoot.
 
 == Build
 
@@ -20,7 +16,7 @@ Otherwise, simply invoke `cargo build` to compile.
 
 == Run
 
-Invoke `cargo run` from the root directory. The executable tries to load sprites and fonts from `./resources`, so the working directory is significant.
+Call `cargo run` from the root.
 
 == Acknowledgements
 
