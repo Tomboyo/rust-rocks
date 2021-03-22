@@ -1,6 +1,7 @@
 use crate::{
     component::{
-        HitMask, Orientation, PlayerInput, Position, Sprite, SpriteKind, Thrusters, Velocity,
+        HitMask, Orientation, Player, PlayerInput, Position, Sprite, SpriteKind, Thrusters,
+        Velocity,
     },
     resource::bounds::Bounds,
 };
@@ -15,6 +16,7 @@ pub fn new(
     Sprite,
     HitMask,
     PlayerInput,
+    Player,
 ) {
     (
         Position {
@@ -32,5 +34,6 @@ pub fn new(
         },
         HitMask::Point,
         PlayerInput,
+        Player,
     )
 }

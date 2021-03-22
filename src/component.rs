@@ -4,6 +4,8 @@ pub struct Asteroid;
 
 pub struct Bullet;
 
+pub struct Player;
+
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Position {
     pub x: f32,

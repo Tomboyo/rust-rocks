@@ -10,14 +10,17 @@ mod system;
 use std::{
     error::Error,
     rc::Rc,
-    sync::{mpsc, Mutex},
+    sync::{mpsc, Arc, Mutex},
 };
 
 use fps_counter::FpsCounter;
 use resource::{
-    bounds::Bounds, controllers::Controllers, input_events::InputEvents, textures::Textures,
+    bounds::Bounds, controllers::Controllers, input_events::InputEvents, score::Score,
+    textures::Textures,
 };
-use scene::{game::GameScene, scene_event::SceneEvent, title::TitleScene, Scene};
+use scene::{
+    game::GameScene, scene_event::SceneEvent, score::ScoreScene, title::TitleScene, Scene,
+};
 use sdl2::{event::Event, gfx::framerate::FPSManager};
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -47,12 +50,12 @@ fn main() -> Result<(), Box<dyn Error>> {
     let mut event_pump = context.event_pump()?;
 
     let (sender, receiver) = mpsc::channel::<SceneEvent>();
-    let sender = Rc::new(sender);
+    let sender = Arc::new(Mutex::new(sender));
 
     let mut scene: Box<dyn Scene> = Box::new(TitleScene::new(
         Rc::clone(&canvas),
         Rc::clone(&textures),
-        Rc::clone(&sender),
+        Arc::clone(&sender),
         &font,
         &texture_creator,
     ));
@@ -60,6 +63,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     let mut fps_manager = FPSManager::new();
     fps_manager.set_framerate(60).unwrap();
     let mut fps_counter = FpsCounter::new();
+
+    let mut high_score = Score::new();
 
     loop {
         let events: Vec<Event> = event_pump.poll_iter().collect();
@@ -79,6 +84,30 @@ fn main() -> Result<(), Box<dyn Error>> {
                         bounds,
                         Rc::clone(&textures),
                         Rc::clone(&canvas),
+                        Arc::clone(&sender),
+                    ))
+                }
+                SceneEvent::PlayerHit { current_score } => {
+                    scene = Box::new(ScoreScene::new(
+                        Rc::clone(&canvas),
+                        Arc::clone(&sender),
+                        &texture_creator,
+                        &font,
+                        high_score,
+                        current_score,
+                    ));
+
+                    if current_score > high_score {
+                        high_score = current_score;
+                    }
+                }
+                SceneEvent::GoToTitle => {
+                    scene = Box::new(TitleScene::new(
+                        Rc::clone(&canvas),
+                        Rc::clone(&textures),
+                        Arc::clone(&sender),
+                        &font,
+                        &texture_creator,
                     ))
                 }
                 _ => (),

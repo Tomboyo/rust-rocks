@@ -1,6 +1,6 @@
 use std::{
     rc::Rc,
-    sync::{mpsc::Sender, Mutex},
+    sync::{mpsc::Sender, Arc, Mutex},
 };
 
 use sdl2::controller::Button;
@@ -23,7 +23,7 @@ use super::{scene_event::SceneEvent, Scene};
 pub struct TitleScene {
     canvas: Rc<Mutex<Canvas<Window>>>,
     textures: Rc<Textures>,
-    bus: Rc<Sender<SceneEvent>>,
+    bus: Arc<Mutex<Sender<SceneEvent>>>,
     menu: Menu,
 }
 
@@ -31,7 +31,7 @@ impl Scene for TitleScene {
     fn run(&mut self, events: InputEvents) {
         self.update_menu(&events);
         self.get_selection(&events)
-            .map(|event| self.bus.send(event));
+            .map(|event| self.bus.lock().unwrap().send(event).unwrap());
         self.render()
     }
 }
@@ -40,7 +40,7 @@ impl TitleScene {
     pub fn new(
         canvas: Rc<Mutex<Canvas<Window>>>,
         textures: Rc<Textures>,
-        bus: Rc<Sender<SceneEvent>>,
+        bus: Arc<Mutex<Sender<SceneEvent>>>,
         font: &Font,
         texture_creator: &TextureCreator<WindowContext>,
     ) -> Self {
@@ -142,6 +142,7 @@ impl Menu {
             .map(|x| match x {
                 SceneEvent::GoToGame => "> Start",
                 SceneEvent::Quit => "> Exit",
+                _ => panic!("Unsupported event {:?}", x),
             })
             .map(|x| Self::create_texture(x, font, texture_creator))
             .collect();
@@ -152,6 +153,7 @@ impl Menu {
             .map(|x| match x {
                 SceneEvent::GoToGame => "  Start",
                 SceneEvent::Quit => "  Exit",
+                _ => panic!("Unsupported event {:?}", x),
             })
             .map(|x| Self::create_texture(x, font, texture_creator))
             .collect();

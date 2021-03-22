@@ -1,11 +1,15 @@
 use std::ops::AddAssign;
 
-#[derive(Debug)]
+#[derive(Copy, Clone, Debug, Eq, PartialOrd, PartialEq)]
 pub struct Score(u32);
 
 impl Score {
     pub fn new() -> Self {
         Self(0)
+    }
+
+    pub fn as_u32(&self) -> u32 {
+        self.0
     }
 }
 

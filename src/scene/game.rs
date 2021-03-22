@@ -1,4 +1,7 @@
-use std::{rc::Rc, sync::Mutex};
+use std::{
+    rc::Rc,
+    sync::{mpsc::Sender, Arc, Mutex},
+};
 
 use legion::{Resources, Schedule, World};
 use sdl2::{render::Canvas, video::Window};
@@ -12,7 +15,7 @@ use crate::{
     system::{self, player_input::PlayerInputState},
 };
 
-use super::Scene;
+use super::{scene_event::SceneEvent, Scene};
 
 pub struct GameScene {
     world: World,
@@ -21,8 +24,12 @@ pub struct GameScene {
 }
 
 impl GameScene {
-    /// Note: acquires a lock on the canvas.
-    pub fn new(bounds: Bounds, textures: Rc<Textures>, canvas: Rc<Mutex<Canvas<Window>>>) -> Self {
+    pub fn new(
+        bounds: Bounds,
+        textures: Rc<Textures>,
+        canvas: Rc<Mutex<Canvas<Window>>>,
+        bus: Arc<Mutex<Sender<SceneEvent>>>,
+    ) -> Self {
         let mut world = World::default();
 
         world.push(asteroid::new(&bounds));
@@ -36,6 +43,7 @@ impl GameScene {
         resources.insert(bounds);
         resources.insert(canvas);
         resources.insert(textures);
+        resources.insert(bus);
         resources.insert(DeltaTime::new());
         resources.insert(Score::new());
 

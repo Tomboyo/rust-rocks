@@ -1,19 +1,29 @@
+use std::sync::{mpsc::Sender, Arc, Mutex};
+
 use legion::{system, systems::CommandBuffer, world::SubWorld, Entity, IntoQuery};
 
 use crate::{
-    component::{Asteroid, Bullet, HitMask, Position},
+    component::{Asteroid, Bullet, HitMask, Player, Position},
     resource::score::Score,
+    scene::scene_event::SceneEvent,
 };
 
 #[system]
 #[read_component(Entity)]
 #[read_component(Asteroid)]
+#[read_component(Player)]
 #[read_component(Bullet)]
 #[read_component(Position)]
 #[read_component(HitMask)]
-pub fn collision(world: &mut SubWorld, cmd: &mut CommandBuffer, #[resource] score: &mut Score) {
+pub fn collision(
+    world: &mut SubWorld,
+    cmd: &mut CommandBuffer,
+    #[resource] score: &mut Score,
+    #[resource] bus: &mut Arc<Mutex<Sender<SceneEvent>>>,
+) {
     let mut asteroids = <(&Position, &HitMask, Entity, &Asteroid)>::query();
     let mut bullets = <(&Position, &HitMask, Entity, &Bullet)>::query();
+    let mut players = <(&Position, &HitMask, &Player)>::query();
 
     asteroids.for_each(world, |asteroid| {
         bullets.for_each(world, |bullet| {
@@ -21,6 +31,16 @@ pub fn collision(world: &mut SubWorld, cmd: &mut CommandBuffer, #[resource] scor
                 cmd.remove(*asteroid.2);
                 cmd.remove(*bullet.2);
                 *score += 1;
+            }
+        });
+
+        let bus = bus.lock().unwrap();
+        players.for_each(world, |player| {
+            if is_collision(asteroid.0, asteroid.1, player.0, player.1) {
+                bus.send(SceneEvent::PlayerHit {
+                    current_score: *score,
+                })
+                .unwrap();
             }
         })
     });
