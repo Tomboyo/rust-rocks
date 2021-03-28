@@ -1,36 +1,37 @@
-use legion::{system, systems::CommandBuffer, world::SubWorld, IntoQuery};
-use sdl2::{
-    controller::{Axis, Button},
-    event::Event,
+use std::{
+    sync::{Arc, Mutex},
+    time::{Duration, Instant},
 };
+
+use legion::{
+    system,
+    systems::{CommandBuffer, Runnable},
+    world::SubWorld,
+    IntoQuery,
+};
+use sdl2::controller::{Axis, Button};
 
 use crate::{
     component::{Orientation, PlayerInput, Position, Thrusters, Velocity},
     entity,
-    resource::delta_time::DeltaTime,
+    resource::{controllers::Controllers, delta_time::DeltaTime},
 };
 
-use crate::resource::input_events::InputEvents;
-
-/// Holds the last-known values of the controller axis. Because each axis is
-/// reported as an event only if it changes, we need this state to determine the
-/// updated orientation of the player.
-pub struct PlayerInputState {
+struct Input {
     right_normal_x: f32,
     right_normal_y: f32,
     left_normal_x: f32,
     left_normal_y: f32,
 }
 
-impl Default for PlayerInputState {
-    fn default() -> Self {
-        PlayerInputState {
-            right_normal_x: 0.0,
-            right_normal_y: 0.0,
-            left_normal_x: 0.0,
-            left_normal_y: 0.0,
-        }
-    }
+pub struct SystemState {
+    fire_timeout: Instant,
+}
+
+pub fn new() -> impl Runnable {
+    player_input_system(SystemState {
+        fire_timeout: Instant::now(),
+    })
 }
 
 #[system]
@@ -42,11 +43,12 @@ impl Default for PlayerInputState {
 pub fn player_input(
     world: &mut SubWorld,
     cmd: &mut CommandBuffer,
-    #[resource] events: &InputEvents,
+    #[resource] controllers: &Arc<Mutex<Controllers>>,
     #[resource] time: &DeltaTime,
-    #[state] state: &mut PlayerInputState,
+    #[state] state: &mut SystemState,
 ) {
-    update_state(state, events);
+    let controllers = controllers.lock().unwrap();
+    let input = read_input_state(&controllers);
 
     let delta_time = time.as_f32();
     <(
@@ -57,21 +59,22 @@ pub fn player_input(
         &PlayerInput,
     )>::query()
     .for_each_mut(world, |(orientation, velocity, position, thrusters, _)| {
-        axis_angle(state.right_normal_x, state.right_normal_y).map(|v| orientation.0 = v);
+        axis_angle(input.right_normal_x, input.right_normal_y).map(|v| orientation.0 = v);
 
         velocity.dx = clamp(
-            velocity.dx + state.left_normal_x * thrusters.magnitude * delta_time,
+            velocity.dx + input.left_normal_x * thrusters.magnitude * delta_time,
             -thrusters.max,
             thrusters.max,
         );
 
         velocity.dy = clamp(
-            velocity.dy + state.left_normal_y * thrusters.magnitude * delta_time,
+            velocity.dy + input.left_normal_y * thrusters.magnitude * delta_time,
             -thrusters.max,
             thrusters.max,
         );
 
-        if fire_bullet(events) {
+        if fire_bullet(&controllers) && state.fire_timeout <= Instant::now() {
+            state.fire_timeout = Instant::now() + Duration::from_millis(200);
             let angle = orientation.0.to_radians();
             cmd.push(entity::bullet::new(
                 *position,
@@ -85,40 +88,27 @@ pub fn player_input(
     });
 }
 
-fn fire_bullet(events: &InputEvents) -> bool {
-    events.iter().any(|event| {
-        matches!(
-            event,
-            Event::ControllerButtonDown {
-                button: Button::RightShoulder,
-                ..
-            }
-        )
-    })
+fn fire_bullet(controllers: &Controllers) -> bool {
+    controllers.vec[0].button(Button::RightShoulder)
 }
 
-fn update_state(state: &mut PlayerInputState, events: &InputEvents) {
-    read_axis(events, Axis::LeftX, 0.3).map(|v| state.left_normal_x = v);
-    read_axis(events, Axis::LeftY, 0.3).map(|v| state.left_normal_y = v);
-    read_axis(events, Axis::RightX, 0.05).map(|v| state.right_normal_x = v);
-    read_axis(events, Axis::RightY, 0.05).map(|v| state.right_normal_y = v);
+fn read_input_state(controllers: &Controllers) -> Input {
+    Input {
+        left_normal_x: read_axis(controllers, Axis::LeftX, 0.05),
+        left_normal_y: read_axis(controllers, Axis::LeftY, 0.05),
+        right_normal_x: read_axis(controllers, Axis::RightX, 0.05),
+        right_normal_y: read_axis(controllers, Axis::RightY, 0.05),
+    }
 }
 
 /// Read a controller axis as an f32 in the range 0..=1. All readings are
 /// subject to a dead zone such that small readings are changed to 0.0.
-fn read_axis<'a>(events: &InputEvents, which_axis: Axis, dead_zone: f32) -> Option<f32> {
-    events
-        .iter()
-        .filter(|event| match event {
-            Event::ControllerAxisMotion { axis, .. } if *axis == which_axis => true,
-            _ => false,
-        })
-        .map(|event| match event {
-            Event::ControllerAxisMotion { value, .. } => normalize_axis(*value),
-            _ => panic!("Event should be guaranteed by filter"),
-        })
+fn read_axis<'a>(controllers: &Controllers, which_axis: Axis, dead_zone: f32) -> f32 {
+    std::iter::once(controllers.vec[0].axis(which_axis))
+        .map(|x| normalize_axis(x))
         .map(|v| if v.abs() > dead_zone { v } else { 0.0 })
         .next()
+        .unwrap()
 }
 
 /// Convert an axis i16 reading to f32 between -1.0 and 1.0 inclusive

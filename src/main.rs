@@ -33,7 +33,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let context = sdl2::init()?;
     let gcs = context.game_controller()?;
-    let _controllers = Controllers::new(&gcs)?;
+    let controllers = Arc::new(Mutex::new(Controllers::new(&gcs)?));
 
     let ttf = sdl2::ttf::init()?;
     let font = ttf.load_font("resources/press-start-2p/font.ttf", 18)?;
@@ -82,6 +82,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                 SceneEvent::GoToGame => {
                     scene = Box::new(GameScene::new(
                         bounds,
+                        Arc::clone(&controllers),
                         Rc::clone(&textures),
                         Rc::clone(&canvas),
                         Arc::clone(&sender),

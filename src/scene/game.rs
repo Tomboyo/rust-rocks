@@ -9,10 +9,10 @@ use sdl2::{render::Canvas, video::Window};
 use crate::{
     entity::{asteroid, player},
     resource::{
-        bounds::Bounds, delta_time::DeltaTime, input_events::InputEvents, score::Score,
-        textures::Textures,
+        bounds::Bounds, controllers::Controllers, delta_time::DeltaTime, input_events::InputEvents,
+        score::Score, textures::Textures,
     },
-    system::{self, player_input::PlayerInputState},
+    system,
 };
 
 use super::{scene_event::SceneEvent, Scene};
@@ -26,6 +26,7 @@ pub struct GameScene {
 impl GameScene {
     pub fn new(
         bounds: Bounds,
+        controllers: Arc<Mutex<Controllers>>,
         textures: Rc<Textures>,
         canvas: Rc<Mutex<Canvas<Window>>>,
         bus: Arc<Mutex<Sender<SceneEvent>>>,
@@ -43,15 +44,14 @@ impl GameScene {
         resources.insert(bounds);
         resources.insert(canvas);
         resources.insert(textures);
+        resources.insert(controllers);
         resources.insert(bus);
         resources.insert(DeltaTime::new());
         resources.insert(Score::new());
 
         let schedule = Schedule::builder()
             .add_thread_local(system::render::render_system())
-            .add_system(system::player_input::player_input_system(
-                PlayerInputState::default(),
-            ))
+            .add_thread_local(system::player_input::new())
             .add_system(system::movement::movement_system())
             .add_system(system::timeout::timeout_system())
             .add_system(system::collision::collision_system())
