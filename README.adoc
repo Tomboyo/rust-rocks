@@ -16,7 +16,15 @@ Otherwise, simply invoke `cargo build` to compile.
 
 == Run
 
-Call `cargo run` from the root.
+Call `cargo run` from the root. Set `RUST_LOG=debug` to print the framerate every second, among other things.
+
+== Design
+
+The `main.rs` file contains the main loop, which instructs an active `Scene` to update every frame. A `Scene` is a distinct mode of interaction with the player. For example, the `TitleScene` presents the player with a menu to either start the game or quit. If they press start, the `TitleScene` is unloaded and replaced with a `GameScene`, which simulates the player and asteroids in the game proper. `Scene`s may generate events that the main loop responds to by unloading one scene and loading another. In this sense, `Scene`s form a finite state machine.
+
+The `TitleScene` and `ScoreScene` are both very rudimentary at this point. The `GameScene` is more thought-out, and uses the Legion Entity Component System (ECS) to simulate asteroids, bullets, the player, and so on. This is a data-driven framework that allows us to compose "entities" together out of pieces of state, called "components." "Systems" impart behavior to entities with at least some subset of components, allowing us to share behavrio between entities with minimal coupling.
+
+Because SDL2 objects are frequently not thread-safe (many of them do not implement Send), they may only be used by the main thread. This is why the systems for player input and for rendering are registered with Legion via `add_thread_local`: we cannot run them on a different thread. The remaining systems, however, are run off-main. The extent to which these actually parallelize is based on the read/write dependnecies of each system.
 
 == Acknowledgements
 
