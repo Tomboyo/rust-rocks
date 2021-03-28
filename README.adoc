@@ -2,7 +2,7 @@
 
 An Asteroids-like game built for fun using link:https://github.com/Rust-SDL2/rust-sdl2[rust-SDL2] and link:https://github.com/amethyst/legion[Legion].
 
-![demo-gif](https://media.githubusercontent.com/media/Tomboyo/rust-rocks/main/resources/demo.gif)
+image::https://media.githubusercontent.com/media/Tomboyo/rust-rocks/main/resources/demo.gif[Demo gif]
 
 == Controls
 
