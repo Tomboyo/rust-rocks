@@ -64,17 +64,17 @@ pub fn player_input(
             orientation.0 = radians.to_degrees();
         }
 
-        velocity.dx = clamp(
-            velocity.dx + input.left_x * thrusters.magnitude * delta_time,
-            -thrusters.max,
-            thrusters.max,
-        );
-
-        velocity.dy = clamp(
-            velocity.dy + input.left_y * thrusters.magnitude * delta_time,
-            -thrusters.max,
-            thrusters.max,
-        );
+        // Apply acceleration to the velocity components, then compute the
+        // magnitude of the resulting vector. If it is greater than the player's
+        // maxspeed, set the vector based on the max speed.
+        velocity.dx += input.left_x * thrusters.magnitude * delta_time;
+        velocity.dy += input.left_y * thrusters.magnitude * delta_time;
+        if let (speed, Some(dir)) = mad(velocity.dx, velocity.dy) {
+            if speed > thrusters.max {
+                velocity.dx = thrusters.max * dir.cos();
+                velocity.dy = thrusters.max * dir.sin();
+            }
+        }
 
         if fire_bullet(&controllers) && state.fire_timeout <= Instant::now() {
             state.fire_timeout = Instant::now() + Duration::from_millis(200);
@@ -130,14 +130,6 @@ fn normalize_axis(value: i16) -> f32 {
         value as f32 / 32_767.0
     } else {
         value as f32 / 32_768.0
-    }
-}
-
-fn clamp(value: f32, min: f32, max: f32) -> f32 {
-    match value {
-        x if x < min => min,
-        x if x > max => max,
-        x => x,
     }
 }
 
