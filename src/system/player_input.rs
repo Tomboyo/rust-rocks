@@ -1,4 +1,5 @@
 use std::{
+    f32::consts::PI,
     sync::{Arc, Mutex},
     time::{Duration, Instant},
 };
@@ -18,10 +19,10 @@ use crate::{
 };
 
 struct Input {
-    right_normal_x: f32,
-    right_normal_y: f32,
-    left_normal_x: f32,
-    left_normal_y: f32,
+    right_x: f32,
+    right_y: f32,
+    left_x: f32,
+    left_y: f32,
 }
 
 pub struct SystemState {
@@ -59,16 +60,18 @@ pub fn player_input(
         &PlayerInput,
     )>::query()
     .for_each_mut(world, |(orientation, velocity, position, thrusters, _)| {
-        axis_angle(input.right_normal_x, input.right_normal_y).map(|v| orientation.0 = v);
+        if let (_, Some(radians)) = mad(input.right_x, input.right_y) {
+            orientation.0 = radians.to_degrees();
+        }
 
         velocity.dx = clamp(
-            velocity.dx + input.left_normal_x * thrusters.magnitude * delta_time,
+            velocity.dx + input.left_x * thrusters.magnitude * delta_time,
             -thrusters.max,
             thrusters.max,
         );
 
         velocity.dy = clamp(
-            velocity.dy + input.left_normal_y * thrusters.magnitude * delta_time,
+            velocity.dy + input.left_y * thrusters.magnitude * delta_time,
             -thrusters.max,
             thrusters.max,
         );
@@ -93,22 +96,32 @@ fn fire_bullet(controllers: &Controllers) -> bool {
 }
 
 fn read_input_state(controllers: &Controllers) -> Input {
-    Input {
-        left_normal_x: read_axis(controllers, Axis::LeftX, 0.05),
-        left_normal_y: read_axis(controllers, Axis::LeftY, 0.05),
-        right_normal_x: read_axis(controllers, Axis::RightX, 0.05),
-        right_normal_y: read_axis(controllers, Axis::RightY, 0.05),
+    let mut input = Input {
+        left_x: read_axis(controllers, Axis::LeftX),
+        left_y: read_axis(controllers, Axis::LeftY),
+        right_x: read_axis(controllers, Axis::RightX),
+        right_y: read_axis(controllers, Axis::RightY),
+    };
+
+    // Apply a dead zone: read zero for any reading within a small distance from
+    // the neutral position.
+
+    if input.left_x.hypot(input.left_y) < 0.05 {
+        input.left_x = 0.0;
+        input.left_y = 0.0;
     }
+
+    if input.right_x.hypot(input.right_y) < 0.05 {
+        input.right_x = 0.0;
+        input.right_y = 0.0;
+    }
+
+    input
 }
 
-/// Read a controller axis as an f32 in the range 0..=1. All readings are
-/// subject to a dead zone such that small readings are changed to 0.0.
-fn read_axis<'a>(controllers: &Controllers, which_axis: Axis, dead_zone: f32) -> f32 {
-    std::iter::once(controllers.vec[0].axis(which_axis))
-        .map(|x| normalize_axis(x))
-        .map(|v| if v.abs() > dead_zone { v } else { 0.0 })
-        .next()
-        .unwrap()
+/// Read a controller axis as an f32 in the range 0..=1.
+fn read_axis<'a>(controllers: &Controllers, which_axis: Axis) -> f32 {
+    normalize_axis(controllers.vec[0].axis(which_axis))
 }
 
 /// Convert an axis i16 reading to f32 between -1.0 and 1.0 inclusive
@@ -128,24 +141,30 @@ fn clamp(value: f32, min: f32, max: f32) -> f32 {
     }
 }
 
-// Determines the angle of the joystick, if possible, based on the
-// coordinates of the joystick relative to the origin.
-//
-// The angle cannot be calculated when the coordinates are the origin
-// itself. We return None in this case only.
-//
-// This determines the angle of the joystick by finding the angle between
-// the x-axis and the hypotenuse of the special triangle formed by the
-// origin and the joystick coordinates.
-fn axis_angle(x: f32, y: f32) -> Option<f32> {
-    if x == 0.0 && y == 0.0 {
-        None
+/// Get the magnitude and direction in radians of the vector from the origin to
+/// the given point. If the point is the origin, this returns (0.0, None). None
+/// is never returned otherwise.
+fn mad(x: f32, y: f32) -> (f32, Option<f32>) {
+    if x == 0.0 {
+        if y == 0.0 {
+            (0.0, None)
+        } else if y > 0.0 {
+            (y.abs(), Some(PI / 2.0))
+        } else {
+            (y.abs(), Some(3.0 * PI / 2.0))
+        }
     } else {
-        let hypotenuse = ((x * x) + (y * y)).sqrt();
-        let degrees = (y / hypotenuse).asin() * (180.0 / std::f32::consts::PI);
-        // the y-axis maps -1.0 to -90, 0.0 => 0, and 1.0 => 90. This is the
-        // correct angle when x >= 0. When x <= 0, we can subtract that from
-        // 180.
-        Some(if x <= 0.0 { 180.0 - degrees } else { degrees })
+        let hypotenuse = x.hypot(y);
+        let angle = if x > 0.0 {
+            // first quadrant: atan positive, magnitude grows towards PI
+            // fourth quadrant: atan negative, magnitude decreases towards 2PI
+            (y / x).atan()
+        } else {
+            // second quadrant: atan negative, matnitude decreases towards PI
+            // thrid quadrant: atan positive, magnitude grows away from PI
+            PI + (y / x).atan()
+        };
+
+        (hypotenuse, Some(angle))
     }
 }
