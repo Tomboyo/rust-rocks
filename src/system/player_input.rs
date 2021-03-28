@@ -13,7 +13,7 @@ use legion::{
 use sdl2::controller::{Axis, Button};
 
 use crate::{
-    component::{PlayerInput, Spatial},
+    component::{PlayerInput, Spatial, WrapAround},
     entity,
     resource::{controllers::Controllers, delta_time::DeltaTime},
 };
@@ -77,6 +77,7 @@ pub fn player_input(
                 dx: spatial.angle_o.cos() * BULLET_SPEED,
                 dy: spatial.angle_o.sin() * BULLET_SPEED,
                 angle_o: spatial.angle_o,
+                wrap: WrapAround::Destroy,
             }));
         }
     });

@@ -1,5 +1,5 @@
 use crate::{
-    component::{HitMask, Player, PlayerInput, Spatial, Sprite, SpriteKind},
+    component::{HitMask, Player, PlayerInput, Spatial, Sprite, SpriteKind, WrapAround},
     resource::bounds::Bounds,
 };
 
@@ -11,6 +11,7 @@ pub fn new(bounds: &Bounds) -> (Spatial, Sprite, HitMask, PlayerInput, Player) {
             dx: 0.0,
             dy: 0.0,
             angle_o: 0.0,
+            wrap: WrapAround::Wrap,
         },
         Sprite {
             kind: SpriteKind::Player,

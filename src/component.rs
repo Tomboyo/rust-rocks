@@ -13,6 +13,14 @@ pub struct Spatial {
     pub dy: f32,
     /// angle of orientation ("where it's pointing"), in radians
     pub angle_o: f32,
+    pub wrap: WrapAround,
+}
+
+pub enum WrapAround {
+    /// An entity should wrap around the edge of the screen
+    Wrap,
+    /// An entity should be removed from play after exiting the screen
+    Destroy,
 }
 
 pub struct DestroyTimeout {

@@ -3,7 +3,7 @@ use std::ops::RangeInclusive;
 use rand::{prelude::ThreadRng, Rng};
 
 use crate::{
-    component::{Asteroid, HitMask, Spatial, Sprite, SpriteKind},
+    component::{Asteroid, HitMask, Spatial, Sprite, SpriteKind, WrapAround},
     resource::bounds::Bounds,
 };
 
@@ -22,6 +22,7 @@ pub fn new<'a>(bounds: &'a Bounds) -> (Spatial, Sprite, HitMask, Asteroid) {
             dx: rng.gen_range(SPEED_RANGE),
             dy: rng.gen_range(SPEED_RANGE),
             angle_o: rng.gen_range(0.0..360.0),
+            wrap: WrapAround::Wrap,
         },
         Sprite {
             kind: SpriteKind::Asteroid,
