@@ -1,34 +1,17 @@
 use crate::{
-    component::{
-        HitMask, Orientation, Player, PlayerInput, Position, Sprite, SpriteKind, Thrusters,
-        Velocity,
-    },
+    component::{HitMask, Player, PlayerInput, Spatial, Sprite, SpriteKind},
     resource::bounds::Bounds,
 };
 
-pub fn new(
-    bounds: &Bounds,
-) -> (
-    Position,
-    Velocity,
-    Thrusters,
-    Orientation,
-    Sprite,
-    HitMask,
-    PlayerInput,
-    Player,
-) {
+pub fn new(bounds: &Bounds) -> (Spatial, Sprite, HitMask, PlayerInput, Player) {
     (
-        Position {
+        Spatial {
             x: bounds.width / 2.0,
             y: bounds.height / 2.0,
+            dx: 0.0,
+            dy: 0.0,
+            angle_o: 0.0,
         },
-        Velocity { dx: 0.0, dy: 0.0 },
-        Thrusters {
-            magnitude: 500.0,
-            max: 600.0,
-        },
-        Orientation(0.0),
         Sprite {
             kind: SpriteKind::Player,
         },

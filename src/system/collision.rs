@@ -3,7 +3,7 @@ use std::sync::{mpsc::Sender, Arc, Mutex};
 use legion::{system, systems::CommandBuffer, world::SubWorld, Entity, IntoQuery};
 
 use crate::{
-    component::{Asteroid, Bullet, HitMask, Player, Position},
+    component::{Asteroid, Bullet, HitMask, Player, Spatial},
     resource::score::Score,
     scene::scene_event::SceneEvent,
 };
@@ -13,7 +13,7 @@ use crate::{
 #[read_component(Asteroid)]
 #[read_component(Player)]
 #[read_component(Bullet)]
-#[read_component(Position)]
+#[read_component(Spatial)]
 #[read_component(HitMask)]
 pub fn collision(
     world: &mut SubWorld,
@@ -21,9 +21,9 @@ pub fn collision(
     #[resource] score: &mut Score,
     #[resource] bus: &mut Arc<Mutex<Sender<SceneEvent>>>,
 ) {
-    let mut asteroids = <(&Position, &HitMask, Entity, &Asteroid)>::query();
-    let mut bullets = <(&Position, &HitMask, Entity, &Bullet)>::query();
-    let mut players = <(&Position, &HitMask, &Player)>::query();
+    let mut asteroids = <(&Spatial, &HitMask, Entity, &Asteroid)>::query();
+    let mut bullets = <(&Spatial, &HitMask, Entity, &Bullet)>::query();
+    let mut players = <(&Spatial, &HitMask, &Player)>::query();
 
     asteroids.for_each(world, |asteroid| {
         bullets.for_each(world, |bullet| {
@@ -46,7 +46,7 @@ pub fn collision(
     });
 }
 
-fn is_collision(p1: &Position, m1: &HitMask, p2: &Position, m2: &HitMask) -> bool {
+fn is_collision(p1: &Spatial, m1: &HitMask, p2: &Spatial, m2: &HitMask) -> bool {
     match (m1, m2) {
         (HitMask::Circle { radius }, HitMask::Point) => distance(p1, p2) < *radius,
         (HitMask::Point, HitMask::Circle { radius }) => distance(p1, p2) < *radius,
@@ -54,6 +54,6 @@ fn is_collision(p1: &Position, m1: &HitMask, p2: &Position, m2: &HitMask) -> boo
     }
 }
 
-fn distance(p1: &Position, p2: &Position) -> f32 {
+fn distance(p1: &Spatial, p2: &Spatial) -> f32 {
     ((p1.x - p2.x).powf(2.0) + (p1.y - p2.y).powf(2.0)).sqrt()
 }

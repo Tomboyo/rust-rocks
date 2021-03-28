@@ -1,26 +1,10 @@
 use std::time::{Duration, Instant};
 
-use crate::component::{
-    Bullet, DestroyTimeout, HitMask, Orientation, Position, Sprite, SpriteKind, Velocity,
-};
+use crate::component::{Bullet, DestroyTimeout, HitMask, Spatial, Sprite, SpriteKind};
 
-pub fn new(
-    p: Position,
-    v: Velocity,
-    o: Orientation,
-) -> (
-    Position,
-    Velocity,
-    Orientation,
-    Sprite,
-    DestroyTimeout,
-    HitMask,
-    Bullet,
-) {
+pub fn new(spatial: Spatial) -> (Spatial, Sprite, DestroyTimeout, HitMask, Bullet) {
     (
-        p,
-        v,
-        o,
+        spatial,
         Sprite {
             kind: SpriteKind::Bullet,
         },

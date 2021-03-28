@@ -4,7 +4,7 @@ use legion::{system, systems::CommandBuffer, world::SubWorld, Entity, IntoQuery}
 
 use crate::{
     component::{Asteroid, SpawnTimeout},
-    entity::{self, asteroid::AsteroidComponents},
+    entity::{self, asteroid::Archetype},
     resource::bounds::Bounds,
 };
 
@@ -27,7 +27,7 @@ pub fn create_spawn_timeout(world: &mut SubWorld, cmd: &mut CommandBuffer) {
 #[read_component(SpawnTimeout)]
 pub fn spawn_asteroids(world: &mut SubWorld, cmd: &mut CommandBuffer, #[resource] bounds: &Bounds) {
     let now = Instant::now();
-    let asteroids: Vec<AsteroidComponents> = <(&SpawnTimeout, Entity)>::query()
+    let asteroids: Vec<Archetype> = <(&SpawnTimeout, Entity)>::query()
         .iter(world)
         .filter(|(timeout, _entity)| timeout.when < now)
         .map(|(_timeout, entity)| {

@@ -6,26 +6,14 @@ pub struct Bullet;
 
 pub struct Player;
 
-#[derive(Clone, Copy, Debug, PartialEq)]
-pub struct Position {
+pub struct Spatial {
     pub x: f32,
     pub y: f32,
-}
-
-#[derive(Clone, Copy, Debug, PartialEq)]
-pub struct Velocity {
     pub dx: f32,
     pub dy: f32,
+    /// angle of orientation ("where it's pointing"), in radians
+    pub angle_o: f32,
 }
-
-#[derive(Clone, Copy, Debug)]
-pub struct Thrusters {
-    pub magnitude: f32,
-    pub max: f32,
-}
-
-#[derive(Copy, Clone, Debug, PartialEq)]
-pub struct Orientation(pub f32);
 
 pub struct DestroyTimeout {
     pub when: Instant,

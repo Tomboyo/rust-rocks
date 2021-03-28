@@ -13,10 +13,13 @@ use legion::{
 use sdl2::controller::{Axis, Button};
 
 use crate::{
-    component::{Orientation, PlayerInput, Position, Thrusters, Velocity},
+    component::{PlayerInput, Spatial},
     entity,
     resource::{controllers::Controllers, delta_time::DeltaTime},
 };
+
+const MAX_PLAYER_SPEED: f32 = 600.0;
+const BULLET_SPEED: f32 = 1_000.0;
 
 struct Input {
     right_x: f32,
@@ -37,10 +40,7 @@ pub fn new() -> impl Runnable {
 
 #[system]
 #[read_component(PlayerInput)]
-#[read_component(Thrusters)]
-#[read_component(Position)]
-#[write_component(Orientation)]
-#[write_component(Velocity)]
+#[write_component(Spatial)]
 pub fn player_input(
     world: &mut SubWorld,
     cmd: &mut CommandBuffer,
@@ -52,41 +52,32 @@ pub fn player_input(
     let input = read_input_state(&controllers);
 
     let delta_time = time.as_f32();
-    <(
-        &mut Orientation,
-        &mut Velocity,
-        &Position,
-        &Thrusters,
-        &PlayerInput,
-    )>::query()
-    .for_each_mut(world, |(orientation, velocity, position, thrusters, _)| {
+    <(&mut Spatial, &PlayerInput)>::query().for_each_mut(world, |(spatial, _)| {
         if let (_, Some(radians)) = mad(input.right_x, input.right_y) {
-            orientation.0 = radians.to_degrees();
+            spatial.angle_o = radians;
         }
 
         // Apply acceleration to the velocity components, then compute the
         // magnitude of the resulting vector. If it is greater than the player's
         // maxspeed, set the vector based on the max speed.
-        velocity.dx += input.left_x * thrusters.magnitude * delta_time;
-        velocity.dy += input.left_y * thrusters.magnitude * delta_time;
-        if let (speed, Some(dir)) = mad(velocity.dx, velocity.dy) {
-            if speed > thrusters.max {
-                velocity.dx = thrusters.max * dir.cos();
-                velocity.dy = thrusters.max * dir.sin();
+        spatial.dx += input.left_x * MAX_PLAYER_SPEED * delta_time;
+        spatial.dy += input.left_y * MAX_PLAYER_SPEED * delta_time;
+        if let (speed, Some(dir)) = mad(spatial.dx, spatial.dy) {
+            if speed > MAX_PLAYER_SPEED {
+                spatial.dx = MAX_PLAYER_SPEED * dir.cos();
+                spatial.dy = MAX_PLAYER_SPEED * dir.sin();
             }
         }
 
         if fire_bullet(&controllers) && state.fire_timeout <= Instant::now() {
             state.fire_timeout = Instant::now() + Duration::from_millis(200);
-            let angle = orientation.0.to_radians();
-            cmd.push(entity::bullet::new(
-                *position,
-                Velocity {
-                    dx: angle.cos() * 1_000.0,
-                    dy: angle.sin() * 1_000.0,
-                },
-                *orientation,
-            ));
+            cmd.push(entity::bullet::new(Spatial {
+                x: spatial.x,
+                y: spatial.y,
+                dx: spatial.angle_o.cos() * BULLET_SPEED,
+                dy: spatial.angle_o.sin() * BULLET_SPEED,
+                angle_o: spatial.angle_o,
+            }));
         }
     });
 }

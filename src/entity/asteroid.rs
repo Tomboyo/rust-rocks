@@ -3,24 +3,26 @@ use std::ops::RangeInclusive;
 use rand::{prelude::ThreadRng, Rng};
 
 use crate::{
-    component::{Asteroid, HitMask, Orientation, Position, Sprite, SpriteKind, Velocity},
+    component::{Asteroid, HitMask, Spatial, Sprite, SpriteKind},
     resource::bounds::Bounds,
 };
 
 const SPEED_RANGE: RangeInclusive<f32> = -100.0..=100.0; // pixels per second
 
-pub type AsteroidComponents = (Position, Velocity, Orientation, Sprite, HitMask, Asteroid);
+/// The "component signature" or "archetype" of an asteroid entity.
+pub type Archetype = (Spatial, Sprite, HitMask, Asteroid);
 
-pub fn new<'a>(bounds: &'a Bounds) -> AsteroidComponents {
+pub fn new<'a>(bounds: &'a Bounds) -> (Spatial, Sprite, HitMask, Asteroid) {
     let mut rng = rand::thread_rng();
     let (x, y) = coords_on_edge(bounds, &mut rng);
     (
-        Position { x, y },
-        Velocity {
+        Spatial {
+            x,
+            y,
             dx: rng.gen_range(SPEED_RANGE),
             dy: rng.gen_range(SPEED_RANGE),
+            angle_o: rng.gen_range(0.0..360.0),
         },
-        Orientation(rng.gen_range(0.0..360.0)),
         Sprite {
             kind: SpriteKind::Asteroid,
         },
