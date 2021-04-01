@@ -19,13 +19,13 @@ pub fn movement(
 
     match spatial.wrap {
         WrapAround::Destroy => {
-            if !bounds.contains(spatial.x, spatial.y) {
+            if !bounds.outer.contains(spatial.x, spatial.y) {
                 cmd.remove(*entity);
             }
         }
         WrapAround::Wrap => {
-            spatial.x = (spatial.x + bounds.width) % bounds.width;
-            spatial.y = (spatial.y + bounds.height) % bounds.height;
+            spatial.x = bounds.outer.wrap_x(spatial.x);
+            spatial.y = bounds.outer.wrap_y(spatial.y);
         }
     }
 }

@@ -14,7 +14,7 @@ pub type Archetype = (Spatial, Sprite, HitMask, Asteroid);
 
 pub fn new<'a>(bounds: &'a Bounds) -> (Spatial, Sprite, HitMask, Asteroid) {
     let mut rng = rand::thread_rng();
-    let (x, y) = coords_on_edge(bounds, &mut rng);
+    let (x, y) = coords_on_edge(&bounds, &mut rng);
     (
         Spatial {
             x,
@@ -33,17 +33,17 @@ pub fn new<'a>(bounds: &'a Bounds) -> (Spatial, Sprite, HitMask, Asteroid) {
 }
 
 fn coords_on_edge(bounds: &Bounds, rng: &mut ThreadRng) -> (f32, f32) {
-    let mut x = 0.0;
-    let mut y = 0.0;
+    let mut x = bounds.outer.p0.x;
+    let mut y = bounds.outer.p0.y;
     if rng.gen::<f32>() < 0.5 {
-        y = rng.gen::<f32>() * bounds.height;
+        y = rng.gen::<f32>() * bounds.outer.height;
         if rng.gen::<f32>() < 0.5 {
-            x = bounds.width;
+            x = bounds.outer.p1.x;
         }
     } else {
-        x = rng.gen::<f32>() * bounds.width;
+        x = rng.gen::<f32>() * bounds.outer.width;
         if rng.gen::<f32>() < 0.5 {
-            y = bounds.height;
+            y = bounds.outer.p1.y;
         }
     }
     (x, y)

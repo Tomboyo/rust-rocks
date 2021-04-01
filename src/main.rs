@@ -26,10 +26,7 @@ use sdl2::{event::Event, gfx::framerate::FPSManager};
 fn main() -> Result<(), Box<dyn Error>> {
     env_logger::init();
 
-    let bounds = Bounds {
-        width: 800.0,
-        height: 600.0,
-    };
+    let bounds = Bounds::new(0.0, 0.0, 800.0, 600.0);
 
     let context = sdl2::init()?;
     let gcs = context.game_controller()?;
@@ -40,7 +37,11 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let video = context.video()?;
     let window = video
-        .window("Rust Rocks", bounds.width as u32, bounds.height as u32)
+        .window(
+            "Rust Rocks",
+            bounds.inner.width as u32,
+            bounds.inner.height as u32,
+        )
         .position_centered()
         .build()?;
     let canvas = Rc::new(Mutex::new(window.into_canvas().build()?));
