@@ -15,7 +15,7 @@ use sdl2::controller::{Axis, Button};
 use crate::{
     component::{PlayerInput, Spatial, WrapAround},
     entity,
-    resource::{controllers::Controllers, delta_time::DeltaTime},
+    resource::{clock::Clock, controllers::Controllers},
 };
 
 const MAX_PLAYER_SPEED: f32 = 600.0;
@@ -32,9 +32,9 @@ pub struct SystemState {
     fire_timeout: Instant,
 }
 
-pub fn new() -> impl Runnable {
+pub fn new(clock: &Clock) -> impl Runnable {
     player_input_system(SystemState {
-        fire_timeout: Instant::now(),
+        fire_timeout: clock.now,
     })
 }
 
@@ -45,13 +45,12 @@ pub fn player_input(
     world: &mut SubWorld,
     cmd: &mut CommandBuffer,
     #[resource] controllers: &Arc<Mutex<Controllers>>,
-    #[resource] time: &DeltaTime,
+    #[resource] clock: &Clock,
     #[state] state: &mut SystemState,
 ) {
     let controllers = controllers.lock().unwrap();
     let input = read_input_state(&controllers);
 
-    let delta_time = time.as_f32();
     <(&mut Spatial, &PlayerInput)>::query().for_each_mut(world, |(spatial, _)| {
         if let (_, Some(radians)) = mad(input.right_x, input.right_y) {
             spatial.angle_o = radians;
@@ -60,8 +59,8 @@ pub fn player_input(
         // Apply acceleration to the velocity components, then compute the
         // magnitude of the resulting vector. If it is greater than the player's
         // maxspeed, set the vector based on the max speed.
-        spatial.dx += input.left_x * MAX_PLAYER_SPEED * delta_time;
-        spatial.dy += input.left_y * MAX_PLAYER_SPEED * delta_time;
+        spatial.dx += input.left_x * MAX_PLAYER_SPEED * clock.delta;
+        spatial.dy += input.left_y * MAX_PLAYER_SPEED * clock.delta;
         if let (speed, Some(dir)) = mad(spatial.dx, spatial.dy) {
             if speed > MAX_PLAYER_SPEED {
                 spatial.dx = MAX_PLAYER_SPEED * dir.cos();
@@ -69,8 +68,8 @@ pub fn player_input(
             }
         }
 
-        if fire_bullet(&controllers) && state.fire_timeout <= Instant::now() {
-            state.fire_timeout = Instant::now() + Duration::from_millis(200);
+        if fire_bullet(&controllers) && state.fire_timeout <= clock.now {
+            state.fire_timeout = clock.now + Duration::from_millis(200);
             cmd.push(entity::bullet::new(Spatial {
                 x: spatial.x,
                 y: spatial.y,

@@ -23,10 +23,6 @@ pub enum WrapAround {
     Destroy,
 }
 
-pub struct DestroyTimeout {
-    pub when: Instant,
-}
-
 pub struct SpawnTimeout {
     pub when: Instant,
 }

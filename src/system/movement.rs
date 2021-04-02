@@ -2,7 +2,7 @@ use legion::{system, systems::CommandBuffer, Entity};
 
 use crate::{
     component::{Spatial, WrapAround},
-    resource::{bounds::Bounds, delta_time::DeltaTime},
+    resource::{bounds::Bounds, clock::Clock},
 };
 
 #[system(for_each)]
@@ -12,10 +12,10 @@ pub fn movement(
     spatial: &mut Spatial,
     cmd: &mut CommandBuffer,
     #[resource] bounds: &Bounds,
-    #[resource] time: &DeltaTime,
+    #[resource] clock: &Clock,
 ) {
-    spatial.x = spatial.x + spatial.dx * time.as_f32();
-    spatial.y = spatial.y + spatial.dy * time.as_f32();
+    spatial.x = spatial.x + spatial.dx * clock.delta;
+    spatial.y = spatial.y + spatial.dy * clock.delta;
 
     match spatial.wrap {
         WrapAround::Destroy => {

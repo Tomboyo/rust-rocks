@@ -8,7 +8,7 @@ image::https://media.githubusercontent.com/media/Tomboyo/rust-rocks/main/resourc
 
 Only xbox-pattern gamepad controls are currently supported. I use a Logitech F710 for testing.
 
-Use the d-pad to navigate menu options, the left thumbstick to accelerate, the right thumbstick to aim, and the right bumper to shoot.
+Use the d-pad to navigate menu options, the left thumbstick to accelerate, the right thumbstick to aim, and the right bumper to shoot. Press start to pause and unpause.
 
 == Build
 
