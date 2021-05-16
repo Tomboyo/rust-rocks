@@ -16,8 +16,6 @@ You must install the `SDL2-devel` (fedora) package or equivalent on your distrib
 
 == Design
 
-=== Main
-
 The Piston framework establishes our main game loop by generating events that our game responds two. By default, Piston generates two "update" events and one "render" event per second, in addition to player-driven input events. `main.rs` instantiates one of several instances of `Scene` to process those events; the implementation chosen dictates what part of the game the player is interacting with. Scenes define three callbacks to respond to different categories of events: The `update` callback advances game state over time, the `render` callback paints current game state to the canvas, and `on_event` handles all other events (such as controller input). Scenes communicate important events back to the main loop using an event bus; based on those events, the main loop changes the active Scene.
 
 The Title and Score scenes are rudimentary, since they contain very little state or logic. Their only purpose is to navigate the player to and from the Game scene, where almost all of the game takes place.
