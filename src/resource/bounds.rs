@@ -1,3 +1,5 @@
+use piston::Size;
+
 const WRAP_PAD: f32 = 64.0;
 const DWRAP_PAD: f32 = 128.0;
 
@@ -68,6 +70,15 @@ impl Bounds {
                 width: width + DWRAP_PAD,
                 height: height + DWRAP_PAD,
             },
+        }
+    }
+}
+
+impl From<Bound> for Size {
+    fn from(bound: Bound) -> Self {
+        Size {
+            width: bound.width as f64,
+            height: bound.height as f64,
         }
     }
 }

@@ -4,8 +4,8 @@ use legion::{system, systems::CommandBuffer, world::SubWorld, Entity, IntoQuery}
 
 use crate::{
     component::{Asteroid, SpawnTimeout},
-    entity::{self, asteroid::Archetype},
     resource::{bounds::Bounds, clock::Clock},
+    scene::game::entity::{self, asteroid::Archetype},
 };
 
 #[system]

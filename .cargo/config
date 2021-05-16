@@ -1,0 +1,3 @@
+[target.x86_64-unknown-linux-gnu.freetype]
+rustc-link-search = ["/usr/lib"]
+rustc-link-lib = ["freetype"]

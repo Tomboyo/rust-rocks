@@ -24,9 +24,7 @@ pub fn new<'a>(bounds: &'a Bounds) -> (Spatial, Sprite, HitMask, Asteroid) {
             angle_o: rng.gen_range(0.0..360.0),
             wrap: WrapAround::Wrap,
         },
-        Sprite {
-            kind: SpriteKind::Asteroid,
-        },
+        Sprite::default(SpriteKind::Asteroid),
         HitMask::Circle { radius: 32.0 },
         Asteroid,
     )

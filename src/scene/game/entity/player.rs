@@ -13,9 +13,7 @@ pub fn new(bounds: &Bounds) -> (Spatial, Sprite, HitMask, PlayerInput, Player) {
             angle_o: 0.0,
             wrap: WrapAround::Wrap,
         },
-        Sprite {
-            kind: SpriteKind::Player,
-        },
+        Sprite::default(SpriteKind::Player),
         HitMask::Point,
         PlayerInput,
         Player,

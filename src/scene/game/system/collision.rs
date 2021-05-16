@@ -5,7 +5,7 @@ use legion::{system, systems::CommandBuffer, world::SubWorld, Entity, IntoQuery}
 use crate::{
     component::{Asteroid, Bullet, HitMask, Player, Spatial},
     resource::score::Score,
-    scene::scene_event::SceneEvent,
+    scene::SceneEvent,
 };
 
 #[system]

@@ -14,8 +14,8 @@ pub fn movement(
     #[resource] bounds: &Bounds,
     #[resource] clock: &Clock,
 ) {
-    spatial.x = spatial.x + spatial.dx * clock.delta;
-    spatial.y = spatial.y + spatial.dy * clock.delta;
+    spatial.x = spatial.x + spatial.dx * clock.dt.as_secs_f32();
+    spatial.y = spatial.y + spatial.dy * clock.dt.as_secs_f32();
 
     match spatial.wrap {
         WrapAround::Destroy => {

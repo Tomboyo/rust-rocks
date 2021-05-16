@@ -1,6 +1,6 @@
 = Rust Rocks
 
-An Asteroids-like game built for fun using link:https://github.com/Rust-SDL2/rust-sdl2[rust-SDL2] and link:https://github.com/amethyst/legion[Legion].
+An Asteroids-like game built for fun using the link:https://github.com/PistonDevelopers/piston[Piston framework] and link:https://github.com/amethyst/legion[Legion].
 
 image::https://media.githubusercontent.com/media/Tomboyo/rust-rocks/main/resources/demo.gif[Demo gif]
 
@@ -10,23 +10,19 @@ Only xbox-pattern gamepad controls are currently supported. I use a Logitech F71
 
 Use the d-pad to navigate menu options, the left thumbstick to accelerate, the right thumbstick to aim, and the right bumper to shoot. Press start to pause and unpause.
 
-== Build
+== Compile & Run
 
-You may need to install development packages for SDL2 since not all of the features are bundled. These may include (on Fedora) `SDL2-devel`, `SDL2_gfx-devel`, and `SDL2_image-devel`.
-
-Otherwise, simply invoke `cargo build` to compile.
-
-== Run
-
-Call `cargo run` from the root. Set `RUST_LOG=debug` to print the framerate every second, among other things.
+You must install the `SDL2-devel` (fedora) package or equivalent on your distribution. Afterwards, `cargo run` will build and run the game.
 
 == Design
 
-The `main.rs` file contains the main loop, which instructs an active `Scene` to update every frame. A `Scene` is a distinct mode of interaction with the player. For example, the `TitleScene` presents the player with a menu to either start the game or quit. If they press start, the `TitleScene` is unloaded and replaced with a `GameScene`, which simulates the player and asteroids in the game proper. `Scene`s may generate events that the main loop responds to by unloading one scene and loading another. In this sense, `Scene`s form a finite state machine.
+=== Main
 
-The `TitleScene` and `ScoreScene` are both very rudimentary at this point. The `GameScene` is more thought-out, and uses the Legion Entity Component System (ECS) to simulate asteroids, bullets, the player, and so on. This is a data-driven framework that allows us to compose "entities" together out of pieces of state, called "components." "Systems" impart behavior to entities with at least some subset of components, allowing us to share behavrio between entities with minimal coupling.
+The Piston framework establishes our main game loop by generating events that our game responds two. By default, Piston generates two "update" events and one "render" event per second, in addition to player-driven input events. `main.rs` instantiates one of several instances of `Scene` to process those events; the implementation chosen dictates what part of the game the player is interacting with. Scenes define three callbacks to respond to different categories of events: The `update` callback advances game state over time, the `render` callback paints current game state to the canvas, and `on_event` handles all other events (such as controller input). Scenes communicate important events back to the main loop using an event bus; based on those events, the main loop changes the active Scene.
 
-Because SDL2 objects are frequently not thread-safe (many of them do not implement Send), they may only be used by the main thread. This is why the systems for player input and for rendering are registered with Legion via `add_thread_local`: we cannot run them on a different thread. The remaining systems, however, are run off-main. The extent to which these actually parallelize is based on the read/write dependnecies of each system.
+The Title and Score scenes are rudimentary, since they contain very little state or logic. Their only purpose is to navigate the player to and from the Game scene, where almost all of the game takes place.
+
+The Game scene simulates the player, asteroids, and bullets that make up the game proper. We use Legion to manage all of the simulation, to include entity state and physics rules. Entities in the simulation are compositions of Components, each of which has associated with it a set of rules. Those rules are captured by Systems, which impose behavior on components every update step. For example, an asteroid is an entity with several components that store its position in space, what entities it can collide with, and how it collides with other entites. Every update, the different systems update all entities with appropriate components in order to move those entities through space, or figure out which ones have collided with one another.
 
 == Acknowledgements
 
